@@ -129,7 +129,26 @@ knitr::opts_chunk$set(echo=TRUE, tidy=TRUE, error=TRUE, fig.align="center")
 
 Décrit les probabilités d'apparition des valeurs d'une distribution donnée.
 
-### Normale
+
+##### Distribution normale (Gaussienne)
+  
+$$ f(x) = \frac{1}{\sigma\sqrt{2\pi}} e^{-\frac{1}{2}(\frac{x-\mu}{\sigma})^2} $$
+
+où $\mu$ et $\sigma$ sont des paramètres, respectivement la moyenne et l'écart-type. 
+
+###### Illustrer cette fonction
+
+```{r}
+
+x<-seq(-5,15,by=0.01)
+mu<-5
+sigma<-2
+y<-(1/(sigma*sqrt(2*pi))*exp((-1/2)*((x-mu)/sigma)^2))
+plot(x,y,type="l")
+
+```
+
+#### Simuler une distribution normale
 
 ```{r}
 set.seed(123)
@@ -138,22 +157,24 @@ x<-rnorm(n,5,2)
 hist(x,breaks=50)
 ```
 
+### Interprétation
+
+```{r}
+
+v<-seq(-5,15,by=0.01)
+hist(x,breaks=50,freq=FALSE,xlim=range(v))
+curve(dnorm(x,5,2),add=TRUE)
+y<-dnorm(v,5,2)
+polygon(c(v[v>=6 & v<=8],8,6), c(y[v>=6 & v<=8],0,0),col=alpha("red",0.5),border=NA)
+
+```
+
+L'aire sous la courbe est de 1 et la proportion de cette surface en rouge représente la probabilité d'obtenir une valeur entre 6 et 8 avec une moyenne de 5 et un écart-type de 2. On peut calculer ceci avec la fonction `ff` intégrée à R. Ce type de fonction est intégré pour plusieurs distribution statistique (voir `?Distributions`)
+
 ##### Variable distribuée normalement
 
 $$ X \sim \mathcal{N}(\mu,\,\sigma^{2})\,.$$
  
-##### Équation d'une distribution normale
-  
-$$ f(x) = \frac{1}{\sigma\sqrt{2\pi}} e^{-\frac{1}{2}(\frac{x-\mu}{\sigma})^2} $$
-
-```{r}
-hist(x,breaks=50,freq=FALSE)
-curve(dnorm(x,5,2),add=TRUE)
-v<-seq(-20,20,by=0.01)
-y<-dnorm(v,5,2)
-polygon(c(v[v>=6 & v<=8],8,6), c(y[v>=6 & v<=8],0,0),col=alpha("red",0.5),border=NA)
-```
-
 ### Recap
 
 *Probabilité d'apparition de valeurs d'une variable aléatoire*
@@ -211,9 +232,34 @@ Le concept d'erreur-type s'applique aussi à d'autres paramètres estimés et pa
 
 Reprenons notre population fictive `pop`.
 
-### Simulations
+### Valeur de p, t.test
+
+```{r}
+n<-100000
+pop1<-rnorm(n,20,3)
+pop2<-rnorm(n,21,3)
+nreps<-2000
+
+ech1<-sample(pop1,10)
+ech2<-sample(pop2,10)
+
+test<-t.test(ech1,ech2)
+
+```
+
+### Simulations t.test
+```{r}
+difference<-sapply(1:nreps,function(i){
+  ech1<-sample(pop1,5) 
+  ech2<-sample(pop2,5)
+  mean(ech1)-mean(ech2)
+})
+
+hist(difference,breaks=50)
+#curve(dt(x,
 
 
+```
 
 ## Valeur de p
 
