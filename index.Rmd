@@ -235,27 +235,47 @@ Reprenons notre population fictive `pop`.
 ### Valeur de p, t.test
 
 ```{r}
-n<-100000
+
+set.seed(123)
+n<-10000
 pop1<-rnorm(n,20,3)
 pop2<-rnorm(n,21,3)
-nreps<-2000
 
 ech1<-sample(pop1,10)
 ech2<-sample(pop2,10)
 
 test<-t.test(ech1,ech2)
+test
 
 ```
 
-### Simulations t.test
+#### Valeur de p
+
 ```{r}
-difference<-sapply(1:nreps,function(i){
+
+plot(0,0,xlim=c(-4,4),ylim=c(0,0.5),type="n")
+curve(dt(x,test$parameter),add=TRUE)
+v<-seq(-5,15,by=0.01)
+y<-dt(v,test$parameter)
+polygon(c(v[v<=test$statistic],test$statistic,min(v)), c(y[v<=test$statistic],0,0),col=alpha("red",0.5),border=NA)
+polygon(c(v[v>=abs(test$statistic)],max(v),abs(test$statistic)), c(y[v>=abs(test$statistic)],0,0),col=alpha("red",0.5),border=NA)
+
+```
+
+#### Simulations, valeur de t
+
+Reprenons le test de t précédent, mais cette fois, prenons nos échantillons dans la même population (pop1) à chaque fois.
+```{r}
+nreps<-1000
+
+tvalue<-sapply(1:nreps,function(i){
   ech1<-sample(pop1,5) 
-  ech2<-sample(pop2,5)
-  mean(ech1)-mean(ech2)
+  ech2<-sample(pop1,5)
+  test<-t.test(ech1,ech2)
+  test$statistic
 })
 
-hist(difference,breaks=50)
+hist(tvalue,breaks=50)
 #curve(dt(x,
 
 
@@ -524,13 +544,21 @@ hist(unlist(p),breaks=seq(0,1,by=0.05),xlab="Valeurs de p")
 
 * Sous l'hypothèse nulle, la distribution des valeurs de p est distribuée uniformément entre 0 et 1.
 
-```
+## Interactions
 
-
-## Interprétation
+## Facteurs
 
 ## Modèles linéaires généraux
 
+Quelles sont les suppositions de bases qui sont susceptibles de ne pas être rencontrées?
+
+* Résidus non-distribués normalement
+
+* Non-égalité des variances
+
+* Non-indépendence des observations
+
+* Relation non-linéaire (
 
 
 # 2. Modèles linéaires généralisés et extensions
