@@ -1,5 +1,5 @@
 ---
-title: "ECL750<br>François Rousseu<br>Hiver 2021"
+title: "" #ECL750<br>François Rousseu<br>Hiver 2021
 author: ""
 date: ""
 output:
@@ -88,8 +88,8 @@ h1.title {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  padding-top: 50px;
-  padding-bottom: 20px;
+  padding-top: 300px;
+  padding-bottom: 50px;
   color: DarkGreen;
   font-weight: bold;
 }
@@ -114,29 +114,38 @@ h5 {
   font-size: 26px;
 }
 
+.pres { /* write {.pres} next to each section to apply css  */
+   padding-top: 100px;
+   margin-bottom: 700px;
+}
+
 </style>
 
 ```{r setup, include=FALSE}
 library(scales)
-knitr::opts_chunk$set(echo=TRUE, tidy=TRUE, error=TRUE, fig.align="center")
+knitr::opts_chunk$set(echo=TRUE, tidy=TRUE, error=TRUE, fig.align="center", fig.width=8, fig.height=6)
 ```
 
 <br>
 
-# 1. Stats de base et modèles linéaires généraux
+# 1. Stats de base et modèles linéaires
 
-## Distributions statistiques
+
+## Distribution statistique
 
 Décrit les probabilités d'apparition des valeurs d'une distribution donnée.
 
 
-##### Distribution normale (Gaussienne)
+### Distribution normale
+
+On parle aussi souvent d'une distribution Gaussienne.
   
 $$ f(x) = \frac{1}{\sigma\sqrt{2\pi}} e^{-\frac{1}{2}(\frac{x-\mu}{\sigma})^2} $$
 
 où $\mu$ et $\sigma$ sont des paramètres, respectivement la moyenne et l'écart-type. 
 
-###### Illustrer cette fonction
+
+#### Forme de la distribution normale
 
 ```{r}
 
@@ -150,34 +159,57 @@ plot(x,y,type="l")
 
 #### Simuler une distribution normale
 
+On peut utiliser la fonction `rnorm` pour simuler des valeurs provenant d'une distribution normale.
+
 ```{r}
 set.seed(123)
 n<-1000
-x<-rnorm(n,5,2)
+x<-rnorm(n,mu,sigma)
 hist(x,breaks=50)
 ```
 
-### Interprétation
+#### Interprétation
 
 ```{r}
 
 v<-seq(-5,15,by=0.01)
 hist(x,breaks=50,freq=FALSE,xlim=range(v))
-curve(dnorm(x,5,2),add=TRUE)
-y<-dnorm(v,5,2)
+curve(dnorm(x,mu,sigma),add=TRUE)
+y<-dnorm(v,mu,sigma)
 polygon(c(v[v>=6 & v<=8],8,6), c(y[v>=6 & v<=8],0,0),col=alpha("red",0.5),border=NA)
 
 ```
 
-L'aire sous la courbe est de 1 et la proportion de cette surface en rouge représente la probabilité d'obtenir une valeur entre 6 et 8 avec une moyenne de 5 et un écart-type de 2. On peut calculer ceci avec la fonction `ff` intégrée à R. Ce type de fonction est intégré pour plusieurs distribution statistique (voir `?Distributions`)
+L'aire sous la courbe est de 1 et la proportion de cette surface en rouge représente la probabilité d'obtenir une valeur entre 6 et 8 avec une moyenne de $\mu = 5$ et un écart-type de $\sigma = 2$. On peut estimer cette probabilité avec la fonction `pnorm` intégrée à R. Ce type de fonction est intégré pour plusieurs distribution statistique (voir `?Distributions`).
 
-##### Variable distribuée normalement
 
-$$ X \sim \mathcal{N}(\mu,\,\sigma^{2})\,.$$
+##### Probabilité d'obtenir une valeur? 
+
+```{r}
+
+pnorm(5,mean=5,sd=2) # probabilité d'obtenir une valeur <= 5
+pnorm(-2,mean=5,sd=2) # probabilité d'obtenir une valeur <= -2
+pnorm(4,mean=5,sd=2) # probabilité d'obtenir une valeur <= 4
+
+```
+
+Probabilité d'obtenir une valeur entre 6 et 8
+
+```{r}
+
+pnorm(8,5,2)-pnorm(6,5,2)
+
+```
+
+
+#### Distribution d'une variable
+
+$$ X \sim \mathcal{N}(\mu,\,\sigma^{2})\,$$
+
+<br>
+
+$X$ suit une distribution normale avec une moyenne $\mu$ et une variance $\sigma^{2}$
  
-### Recap
-
-*Probabilité d'apparition de valeurs d'une variable aléatoire*
 
 ## Erreur-type
 
@@ -195,7 +227,8 @@ mean(ech) # moyenne
 sd(ech)/sqrt(30) # erreur-type
 ```
 
-#### Simulations
+
+### Simulations
 
 Ici, on refait cet échantillonnage `nreps` fois et on calcule l'écart-type des différentes moyennes obtenues.
 ```{r}
@@ -208,7 +241,7 @@ ech1000<-sapply(1:nreps,function(i){
 hist(ech1000)
 ```
 
-##### Écart-type des valeurs simulées
+#### Écart-type des valeurs simulées
 
 ```{r}
 
@@ -228,20 +261,26 @@ L'écart-type de ces moyennes correspond à l'erreur-type estimée à partir d'u
 
 Le concept d'erreur-type s'applique aussi à d'autres paramètres estimés et pas seulement à la moyenne.  
 
+
 ## Intervalle de confiance
 
 Reprenons notre population fictive `pop`.
 
-### Valeur de p, t.test
 
+### À compléter
+
+
+## Valeur de p
+
+Un exemple avec le test de $t$ et une population fictive.
 ```{r}
 
-set.seed(123)
+set.seed(1)
 n<-10000
-pop1<-rnorm(n,20,3)
-pop2<-rnorm(n,21,3)
+pop1<-rnorm(n,20,3) # population fictive de n indoividus avec une moyenne de 20
+pop2<-rnorm(n,21,3) # population fictive de n indoividus avec une moyenne de 21
 
-ech1<-sample(pop1,10)
+ech1<-sample(pop1,10) # échantillon de 10 individus de chaque population
 ech2<-sample(pop2,10)
 
 test<-t.test(ech1,ech2)
@@ -249,7 +288,7 @@ test
 
 ```
 
-#### Valeur de p
+### Interprétation de la Valeur de p
 
 ```{r}
 
@@ -262,10 +301,12 @@ polygon(c(v[v>=abs(test$statistic)],max(v),abs(test$statistic)), c(y[v>=abs(test
 
 ```
 
-#### Simulations, valeur de t
+### Simulations
 
-Reprenons le test de t précédent, mais cette fois, prenons nos échantillons dans la même population (pop1) à chaque fois.
+Reprenons le test de $t$ précédent, mais cette fois, prenons nos échantillons dans la même population (pop1) à chaque fois.
+
 ```{r}
+
 nreps<-1000
 
 tvalue<-sapply(1:nreps,function(i){
@@ -276,24 +317,20 @@ tvalue<-sapply(1:nreps,function(i){
 })
 
 hist(tvalue,breaks=50)
-#curve(dt(x,
-
 
 ```
 
-## Valeur de p
+#### À compléter !!!!
 
-## Erreur de type I
 
 ## Modèles linéaires simples
 
-### Formulation classique
+On a ici la formulation classique ou habituelle d'un modèle linéaire simple.
 
 $$ y = \beta_{0} + \beta_{1}x_{1} + \beta_{2}x_{2} +  ...  + \beta_{n}x_{n} + \epsilon $$
 
 $$ \epsilon \sim \mathcal{N}(0,\,\sigma^{2})\ $$
 
-<hr>
 
 ### Autre formulation
 
@@ -307,28 +344,33 @@ $y$ = observations
 
 $\mu$ = prédicteur linéaire
 
-<hr>
+On a donc un modèle représentant le lien entre nos variables et on cherche à estimer les **paramètres** de ce modèles à l'aide de données.
 
-## Suppositions de bases
+### Suppositions de bases
 
-* Quelles sont les suppositions de bases?
+Quelles sont les suppositions de bases d'un modèle ;linéaire tel que celui présenté?
 
 * Normalité des résidus? 
 
-* Homoscédasticité de la variance (la variance ne dépend pas de x, ne varie pas avec x)
+* Homoscédasticité de la variance (la variance ne dépend pas de $x_{n}$, ne varie pas avec $x_{n}$)
 
-* Linéarité des relations entre $x_{n}$ et $y$ ?
+* Linéarité des relations entre $x_{n}$ et $y$?
 
-* Corrélation entre les $x_{n}$
+* Corrélation entre les $x_{n}$?
+
+* Indépendence entre les observations?
+
+<!-- peut-êwtre compléter avec une slide sur chaque et des solutions -->
 
 ### Simulations
 
-* Une des meilleure façon de s'assurer qu'on comprend comment fonctionne un modèle
+* Une des meilleures façon de s'assurer qu'on comprend comment fonctionne un modèle
 
 * Permet d'étudier le comportement d'un modèle avec des valeurs connues
 
 
-##### Simulons un modèle
+### Simulons un modèle
+
 ```{r}
 # nb d'observations
 n<-200
@@ -355,9 +397,9 @@ d<-data.frame(y,x1,x2,x3)
 
 ```
 
-##### Fonction `lm`
+### Fonction `lm`
 
-La fonction `lm` permet de faire d4es modèles linéaires simples, ce qui inclue les régressions simples, les ANOVAs, ANCOVAs, régression multiples, etc.
+La fonction `lm` permet de faire des modèles linéaires simples, ce qui inclue les régressions simples, les ANOVAs, ANCOVAs, régression multiples, etc.
 
 Remarquez l'utilisation de l'argument `data` où la fonction ira chercher les différents éléments spécifiés dans la formule.
 
@@ -367,30 +409,43 @@ m<-lm(y~x1+x2+x3,data=d)
 
 ```
 
-##### Coefficients
+#### Coefficients
 
-On peut appliquer plusieurs fonctions pour extraire les éléments d'un modèle, en particulier un modèle effectuÉ avec `lm`
+On peut appliquer plusieurs fonctions pour extraire les éléments d'un modèle, en particulier un modèle effectué avec la fonction `lm`
 
 ```{r}
 coef(m)
 ```
 
-##### Sommaire
+#### Sommaire
 
-La fonction `summary` est la plus complète pour extraire l'information du modèle.
+La fonction `summary` est la plus utile pour extraire l'information d'un modèle.
+
 ```{r}
 summary(m)
 ```
 
 ##### Résidus
 
+```{r}
+summary(m)
+```
+
 La section `Residuals` illustre la distribution des valeurs des résidus tout en illustrant les valeurs les plus extrêmes.
 
 ##### Coefficients
 
+```{r}
+summary(m)
+```
+
 Ici, la section `Coefficients:` donne chacun des paramètres associés au modèle. Pour chaque coefficient, un test est effectué et pour chaque test l'hypothèse nulle est que le coefficient est égal à zéro ($H_{0}: \beta_{p} = 0$). Remarquez que les coefficients suivent une distribution du t de Student. La façon de représenter la valeur de p représente bien le fait que cette valeur représente une probabilité d'obtenir un telle valeur de t ou pire encore.
 
 ##### R2
+
+```{r}
+summary(m)
+```
 
 `Multiple R-squared` est le coefficient de détermination ($R^{2}$). Il représente la proportion de variance expliquée par les variables explicatives (i.e. par le modèle).
 
@@ -399,6 +454,10 @@ $$R^{2} = \frac{\textrm{Variance expliquée}}{\textrm{Variance totale}}$$
 `Adjusted R-squared` est le coefficient de détermination ajusté pour le nombre de paramètres dans le modèle. Contrairement au $R^{2}$ standard, qui augmente toujours avec le nombre de paramètres et ce, même si les paramètres n'expliquent rien, le $R^{2}$ ajusté n'augmente pas avec le nombre de paramètres si ceux-ci ne sont d'aucune utilité pour expliquer le phénomène.
 
 ##### F-statistic
+
+```{r}
+summary(m)
+```
 
 Teste l'hypothèse nulle selon laquelle toute les pentes sont simultanément égales à zéro, i.e.:
 
@@ -410,11 +469,16 @@ La function `anova` peut être utilisée pour effectuer ce test en l'appliquant 
 
 ##### Variance résiduelle
 
+```{r}
+summary(m)
+```
+
 `Residual standard error` représente la variance résiduelle ou la variance non-expliquée par le modèle
 
-#### Vérification des suppositions
 
-##### Fonction plot
+#### Vérification des suppositions de bases
+
+On peut utiliser la fonction `plot` qui lorsqu'appliquée sur un objet de classe `lm` produira des graphiques permettant de vérifier certaines suppositions de bases.
 
 ```{r}
 
@@ -425,9 +489,11 @@ plot(m)
 
 ##### Fonctions accessoires
 
-```{r}
+On peut également créer facilement certains de ces graphiques avec d'autres fonctions.
 
-par(mfrow=c(2,2))
+```{r,fig.width=12,fig.height=4}
+
+par(mfrow=c(1,3))
 plot(resid(m),fitted(m))
 hist(resid(m))
 qqnorm(resid(m))
@@ -435,9 +501,26 @@ qqline(resid(m))
 
 ```
 
-#### Prédictions ou comprendre son modèle
+### Facteurs
 
-##### `predict`
+```{r}
+
+# simulations d'un facteur
+d$fac<-factor(sample(c("A","B","C"),nrow(d),replace=TRUE))
+d$y<-d$y+2*as.integer(d$fac)-1
+
+# modèle modifié avec le facteur
+m<-lm(y~x1+x2+x3+fac,data=d)
+summary(m)
+
+```
+
+<!-- les facteurs sont comparés par rapport au niveau de référence! -->
+
+
+## Comprendre son modèle avec des graphiques
+
+### Fonction `predict`
 
 La fonction `predict` sert à calculer la valeur prédite par le modèle pour chaque observation. Par exemple, ceci permet de mettre en relation les valeurs observées et les valeurs prédites:
 
@@ -448,36 +531,36 @@ plot(d$y,predict(m))
 ```
 
 
-##### Soumettre de nouvelle valeurs
+#### Soumettre de nouvelle valeurs
 
-Plus souvent, on veut illustrer l'effet de nos variables et pour cela il faut soumettre des valeurs à la fonction `predict`. Cette fonction est très utile lorsque l'on veut un maximum de contrôle sur les valeurs à prédire.
+Plus souvent, on veut illustrer l'effet de nos variables et pour cela, il faut soumettre des valeurs à la fonction `predict`. Cette fonction est très utile lorsque l'on veut un maximum de contrôle sur les valeurs à prédire.
 
 ```{r}
 
 x<-seq(min(d$x1),max(d$x1),length.out=50)
-nd<-data.frame(x1=x,x2=mean(d$x2),x3=mean(d$x3)) # on fixe les autres variables à leur valeur moyenne
+nd<-data.frame(x1=x,x2=mean(d$x2),x3=mean(d$x3),fac="B") # on fixe les autres variables à leur valeur moyenne
 p<-predict(m,newdata=nd)
 plot(d$x1,d$y) # observations
 lines(x,p) # valeurs prédites
 
 ```
 
-##### Package `visreg`
+#### Package `visreg`
 
 Le package [visreg](https://pbreheny.github.io/visreg/) permet d'illustrer facilement les prédictions d'un modèle (ou les effets marginaux des différentes variables explicatives). Il utilise en arrière-plan la fonction `predict`.
 
-```{r}
+```{r,fig.width=8,fig.height=8}
 library(visreg)
 par(mfrow=c(2,2))
 visreg(m)
 
 ```
 
-##### Package `ggeffects`
+#### Package `ggeffects`
 
-Le package [ggeffects](https://strengejacke.github.io/ggeffects/index.html) permet également d'illustrer les prédictions d'un modèle, mais se package se base sur l'utilisation du package ggplot2 pour construire les graphiques. Le principe demeure le même, en arrière-plan la fonction `predict` est utilisée. On peut également combiner les différents graphiques générés en utilisant le package [patchwork](https://patchwork.data-imaginist.com/index.html) et sa fonction `wrap_plots`
+Le package [ggeffects](https://strengejacke.github.io/ggeffects/index.html) permet également d'illustrer les prédictions d'un modèle, mais ce package se base sur l'utilisation du package ggplot2 pour construire les graphiques. Le principe demeure le même, en arrière-plan la fonction `predict` est utilisée. On peut également combiner les différents graphiques générés en utilisant le package [patchwork](https://patchwork.data-imaginist.com/index.html) et sa fonction `wrap_plots`.
 
-```{r}
+```{r,fig.width=8,fig.height=8}
 library(ggeffects)
 library(patchwork)
 g<-ggpredict(m)
@@ -486,15 +569,74 @@ wrap_plots(p)
 
 ```
 
-## Erreur de type 1
+
+### Interactions
+
+Dans vos mots, qu'est-ce qu'une interaction?
+
+<!-- C'est lorsque l'effet d'une variable dépend des valeurs d'une autre variable (ou de plusieurs) -->
+
+
+#### Un exemple
+
+```{r}
+
+# modèle modifié avec le facteur
+m<-lm(y~x1+x2+x3+x1*fac,data=d)
+summary(m)
+
+```
+
+
+#### Illustration graphique
+
+On a une interaction significative, mais est-elle importante d'un point de vue biologique? Peut-être pas... Toujours distinguer entre la **signification statistique** et la **signification biologique**.
+
+Une valeur de p significative c'est bien beau, mais ce qui importe vraiment c'est **la taille de l'effet**.
+
+```{r}
+
+visreg(m,"x1",by="fac",overlay=TRUE)
+
+```
+
+
+##### Interactions avec `ggeffects`
+
+```{r}
+
+g<-ggpredict(m,terms=c("x1","fac"))
+plot(g,add.data=TRUE,jitter=FALSE)
+
+```
+
+
+#### Interprétion
+
+* Beaucoup plus facile avec un graphique qu'en regardant une table de coefficient
+
+* En présence d'une interaction (significative), les effets simples sont plus difficilement interprétables et ne peuvent être interpréter sans faire référence à l'interaction (à moins d'ajustements particuliers).
+
+* Si pour deux variables impliquées dans une interaction les effets simples ne sont pas significatifs, mais que leur interaction l'est, il faut considérer que ces deux variables ont un effet.
+
+
+## Types d'erreurs
+
+* Erreur de type I: 
+
+* Erreur de type II: 
+
+<!-- le fait de rejeter l'hypothèse nulle, alors qu'elle est vraie. -->
+
+<!-- le fait de ne pas rejeter l'hypothèse nulle, alors qu'elle est fausse -->
+
+### Simulations 
 
 Simulons un modèle dans lequel les variables n'ont aucun effet. 
 
 Que se passera-t-il si on répète plusieurs fois ce scénario?
 
 À quoi ressembleront nos valeurs de p?
-
-##### Simulations 
 
 Créons d'abord une fonction `sim_model` pour générer un modèle linéaire fictif. 
 
@@ -513,9 +655,10 @@ sim_model<-function(b0,b1,b2,b3){
 }
 ```
 
-#####
 
-Ensuite, simulons `nsims` modèles fictifs et emmagasinons ces modèles dans une liste `list_models`.
+#### Simulons
+
+Ensuite, simulons `nsims` modèles fictifs et enmmagasinons ces modèles dans une liste nomée `list_models`.
 
 ```{r}
 nsims<-500
@@ -526,7 +669,7 @@ list_models<-lapply(1:nsims,function(i){
 ```
 
 
-##### Valeurs de p obtenus
+#### Valeurs de p obtenus
 
 ```{r}
 
@@ -538,17 +681,16 @@ hist(unlist(p),breaks=seq(0,1,by=0.05),xlab="Valeurs de p")
 
 ```
 
-##### Erreur de type I
 
-* Dans une certaine proportion des cas ( = 5% ), on conclut à un effet, alors qu'il n'y en a pas pas!
+##### Conclusions
 
-* Sous l'hypothèse nulle, la distribution des valeurs de p est distribuée uniformément entre 0 et 1.
+* Dans une certaine proportion des cas ( = 5% ), on conclut à un effet, alors qu'il n'y en a pas pas! C'est le fameux seuil $\alpha$ de 0.05.
 
-## Interactions
+* Sous l'hypothèse nulle, les valeurs de p sont distribuées uniformément entre 0 et 1.
 
-## Facteurs
 
-## Modèles linéaires généraux
+
+## Extensions
 
 Quelles sont les suppositions de bases qui sont susceptibles de ne pas être rencontrées?
 
@@ -558,14 +700,17 @@ Quelles sont les suppositions de bases qui sont susceptibles de ne pas être ren
 
 * Non-indépendence des observations
 
-* Relation non-linéaire (
+* Relation non-linéaire 
 
 
-# 2. Modèles linéaires généralisés et extensions
+<!--
+
+# 2. Modèles linéaires généraux, généralisés et extensions
 
 
-# 3. Sélection de modèles et régularisation
+# 3. Vraisemblance, sélection de modèles et régularisation
 
 
-# 4. Introduction à l'approche bayésienne
+# 4. Introduction aux statistiques bayésiennes
 
+-->
