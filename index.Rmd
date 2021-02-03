@@ -88,7 +88,7 @@ h1.title {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  padding-top: 300px;
+  padding-top: 800px;
   padding-bottom: 50px;
   color: DarkGreen;
   font-weight: bold;
@@ -124,6 +124,7 @@ h5 {
 ```{r setup, include=FALSE}
 library(scales)
 knitr::opts_chunk$set(echo=TRUE, tidy=TRUE, error=TRUE, fig.align="center", fig.width=8, fig.height=6)
+options(width=150)
 ```
 
 <br>
@@ -139,8 +140,12 @@ Décrit les probabilités d'apparition des valeurs d'une distribution donnée.
 ### Distribution normale
 
 On parle aussi souvent d'une distribution Gaussienne.
+
+<br>
   
 $$ f(x) = \frac{1}{\sigma\sqrt{2\pi}} e^{-\frac{1}{2}(\frac{x-\mu}{\sigma})^2} $$
+
+<br>
 
 où $\mu$ et $\sigma$ sont des paramètres, respectivement la moyenne et l'écart-type. 
 
@@ -204,6 +209,8 @@ pnorm(8,5,2)-pnorm(6,5,2)
 
 #### Distribution d'une variable
 
+<br>
+
 $$ X \sim \mathcal{N}(\mu,\,\sigma^{2})\,$$
 
 <br>
@@ -213,11 +220,19 @@ $X$ suit une distribution normale avec une moyenne $\mu$ et une variance $\sigma
 
 ## Erreur-type
 
+<br>
+
 $$ se = \frac{sd}{\sqrt{n}} $$
+
+<br>
 
 ou
 
+<br>
+
 $$ \sigma_{\bar{x}} = \frac{\sigma_{x}}{\sqrt{n}} $$
+
+<br>
 
 ```{r}
 n<-100000
@@ -228,9 +243,10 @@ sd(ech)/sqrt(30) # erreur-type
 ```
 
 
-### Simulations
+### Simulation
 
 Ici, on refait cet échantillonnage `nreps` fois et on calcule l'écart-type des différentes moyennes obtenues.
+
 ```{r}
 
 nreps<-1000
@@ -249,7 +265,15 @@ sd(ech1000)
 
 ```
 
-##### Interprétation de l'écart-type
+Comparons ceci à l'erreur-type calculé à partir de notre seul échantillon:
+
+```{r}
+
+sd(ech)/sqrt(30) # erreur-type
+
+```
+
+##### Interprétation de l'erreur-type
 
 L'écart-type de ces moyennes correspond à l'erreur-type estimée à partir d'un seul échantillon. En d'autres mots, l'erreur-type représente:
 
@@ -258,17 +282,62 @@ L'écart-type de ces moyennes correspond à l'erreur-type estimée à partir d'u
 
 * une mesure de précision dans l'estimation de  la moyenne
 
+<br>
 
 Le concept d'erreur-type s'applique aussi à d'autres paramètres estimés et pas seulement à la moyenne.  
+
+<br>
+
+L'erreur-type d'une statistique ou d'un paramètre est une estimation de l'écart-type de sa distribution d'échantillonnage.
 
 
 ## Intervalle de confiance
 
-Reprenons notre population fictive `pop`.
+Reprenons notre population fictive `pop` qui a une moyenne de 100 et un écart-type de 20. On se rappelle qu'un intervalle de confiance pour une moyenne provenant d'un échantillon distribué normalement (ou presque) se calcule de la façon suivante:
 
+<br>
 
-### À compléter
+$$\bar{x} ± t_{dl,\alpha/2}\sigma_{\bar{x}}$$
 
+<br>
+
+On peut calculer cet intervalle de confiance avec R:
+
+```{r}
+
+mean(ech)+qt(0.025,df=length(ech)-1,lower.tail=FALSE)*(sd(ech)/sqrt(length(ech)))*c(-1,1)
+
+```
+
+### Simulation
+
+Maintenant, reprenons note population fictive et calculons à chaque fois cet intervalle de confiance. Ensuite, calculons quelle est la proportion des intervalles qui contiennent la véritable moyenne de 100.
+
+```{r}
+
+nreps<-1000
+ech1000<-lapply(1:nreps,function(i){
+  s<-sample(pop,30)	
+  c(mean(s),mean(s)+qt(0.025,df=length(s)-1,lower.tail=FALSE)*(sd(s)/sqrt(length(s)))*c(-1,1))
+})
+ci<-as.data.frame(do.call("rbind",ech1000))
+names(ci)<-c("mean","lowerCI","upperCI")
+
+sum(100>=ci$lowerCI & 100<=ci$upperCI)/nreps
+
+```
+
+### Interprétation de l'intervalle de confiance
+
+Un intervalle de confiance à 95% veut dire que 95% des intervalles de confiance qu'on obtiendrait si on refaisait le même échantillonnage contiendront la véritable moyenne de la population.
+
+Plus généralement, on devrait parler d'un paramètre (moyenne, variance, pente, etc.) plutôt que d'une moyenne.
+
+On entend souvent à tort que cela veut dire qu'il y a 95% de chances que le paramètre soit à l'intérieur des bornes. Or le paramètre est considéré comme étant fixe et la probabilité porte sur le fait que l'intervalle contienne la véritable valeur du paramètre ou pas.
+
+Tout comme l'erreur-type, l'intervalle de confiance est une mesure de précision dans l'estimation d'un paramètre.
+
+<!--
 
 ## Valeur de p
 
@@ -322,10 +391,15 @@ hist(tvalue,breaks=50)
 
 #### À compléter !!!!
 
+-->
 
 ## Modèles linéaires simples
 
+<br>
+
 On a ici la formulation classique ou habituelle d'un modèle linéaire simple.
+
+<br>
 
 $$ y = \beta_{0} + \beta_{1}x_{1} + \beta_{2}x_{2} +  ...  + \beta_{n}x_{n} + \epsilon $$
 
@@ -334,11 +408,17 @@ $$ \epsilon \sim \mathcal{N}(0,\,\sigma^{2})\ $$
 
 ### Autre formulation
 
+<br>
+
 $$ \mu = \beta_{0} + \beta_{1}x_{1} + \beta_{2}x_{2} +  ...  + \beta_{n}x_{n}$$
 
 $$ y \sim \mathcal{N}(\mu,\,\sigma^{2})\ $$
 
+<br>
+
 où 
+
+<br>
 
 $y$ = observations
 
@@ -348,11 +428,11 @@ On a donc un modèle représentant le lien entre nos variables et on cherche à 
 
 ### Suppositions de bases
 
-Quelles sont les suppositions de bases d'un modèle ;linéaire tel que celui présenté?
+Quelles sont les suppositions de bases d'un modèle linéaire tel que celui présenté?
 
 * Normalité des résidus? 
 
-* Homoscédasticité de la variance (la variance ne dépend pas de $x_{n}$, ne varie pas avec $x_{n}$)
+* Homoscédasticité de la variance (la variance ne dépend pas de ou ne varie pas avec $x_{n}$)
 
 * Linéarité des relations entre $x_{n}$ et $y$?
 
@@ -364,7 +444,7 @@ Quelles sont les suppositions de bases d'un modèle ;linéaire tel que celui pr�
 
 ### Simulations
 
-* Une des meilleures façon de s'assurer qu'on comprend comment fonctionne un modèle
+* Une des meilleures façons de s'assurer qu'on comprend comment fonctionne un modèle
 
 * Permet d'étudier le comportement d'un modèle avec des valeurs connues
 
@@ -375,7 +455,7 @@ Quelles sont les suppositions de bases d'un modèle ;linéaire tel que celui pr�
 # nb d'observations
 n<-200
 
-# valeurs fictives des variables explicatives
+# valeurs fictives des variables explicatives selon une distribution uniforme
 x1<-runif(n,0,100)
 x2<-runif(n,0,10)
 x3<-runif(n,0,1)
@@ -411,7 +491,7 @@ m<-lm(y~x1+x2+x3,data=d)
 
 #### Coefficients
 
-On peut appliquer plusieurs fonctions pour extraire les éléments d'un modèle, en particulier un modèle effectué avec la fonction `lm`
+On peut appliquer plusieurs fonctions pour extraire les éléments d'un modèle, en particulier un modèle effectué avec la fonction `lm`.
 
 ```{r}
 coef(m)
@@ -431,7 +511,9 @@ summary(m)
 summary(m)
 ```
 
-La section `Residuals` illustre la distribution des valeurs des résidus tout en illustrant les valeurs les plus extrêmes.
+<br>
+
+La section `Residuals:` illustre la distribution des valeurs des résidus tout en illustrant les valeurs les plus extrêmes.
 
 ##### Coefficients
 
@@ -439,7 +521,9 @@ La section `Residuals` illustre la distribution des valeurs des résidus tout en
 summary(m)
 ```
 
-Ici, la section `Coefficients:` donne chacun des paramètres associés au modèle. Pour chaque coefficient, un test est effectué et pour chaque test l'hypothèse nulle est que le coefficient est égal à zéro ($H_{0}: \beta_{p} = 0$). Remarquez que les coefficients suivent une distribution du t de Student. La façon de représenter la valeur de p représente bien le fait que cette valeur représente une probabilité d'obtenir un telle valeur de t ou pire encore.
+<br>
+
+Ici, la section `Coefficients:` donne chacun des paramètres associés au modèle. Pour chaque coefficient, un test est effectué et pour chaque test l'hypothèse nulle est que le coefficient est égal à zéro ($H_{0}: \beta_{p} = 0$). Remarquez que les coefficients suivent une distribution du t de Student. La façon de représenter la valeur de p représente bien le fait que cette valeur représente une probabilité d'obtenir un telle valeur de t donnée ou pire encore.
 
 ##### R2
 
@@ -447,9 +531,15 @@ Ici, la section `Coefficients:` donne chacun des paramètres associés au modèl
 summary(m)
 ```
 
+<br>
+
 `Multiple R-squared` est le coefficient de détermination ($R^{2}$). Il représente la proportion de variance expliquée par les variables explicatives (i.e. par le modèle).
 
+<br>
+
 $$R^{2} = \frac{\textrm{Variance expliquée}}{\textrm{Variance totale}}$$
+
+<br>
 
 `Adjusted R-squared` est le coefficient de détermination ajusté pour le nombre de paramètres dans le modèle. Contrairement au $R^{2}$ standard, qui augmente toujours avec le nombre de paramètres et ce, même si les paramètres n'expliquent rien, le $R^{2}$ ajusté n'augmente pas avec le nombre de paramètres si ceux-ci ne sont d'aucune utilité pour expliquer le phénomène.
 
@@ -459,13 +549,19 @@ $$R^{2} = \frac{\textrm{Variance expliquée}}{\textrm{Variance totale}}$$
 summary(m)
 ```
 
+<br>
+
 Teste l'hypothèse nulle selon laquelle toute les pentes sont simultanément égales à zéro, i.e.:
+
+<br>
 
 $$ H_{0}: \beta_{1} = \beta_{2} = ... = \beta_{p} = 0 $$
 
-Ce test  produit une valeur de $F$ qui représente un ratio de variances. Le rejet de cette hypothèse signifie qu'au moins une des pentes est différente de zéro. Intuitivement, cela peut être interpréter comme signifiant que le modèle explique une portion significative de la variance. À noter que parfois, ce test peut être significatif, alors que les tests individuels sur chaque coefficient ne le sont pas ou vice versa. 
+<br>
 
-La function `anova` peut être utilisée pour effectuer ce test en l'appliquant sur un modèle.
+Ce test  produit une valeur de $F$ qui représente un ratio de variances. Le rejet de cette hypothèse signifie qu'au moins une des pentes est différente de zéro. Intuitivement, cela peut être interprété comme signifiant que le modèle explique une portion significative de la variance. À noter que parfois, ce test peut être significatif, alors que les tests individuels sur chaque coefficient ne le sont pas ou vice versa. 
+
+La function `anova` peut être utilisée pour effectuer ce test en l'appliquant sur un modèle ou sur plusieurs modèle pour comparer les modèles entre eux.
 
 ##### Variance résiduelle
 
@@ -473,12 +569,14 @@ La function `anova` peut être utilisée pour effectuer ce test en l'appliquant 
 summary(m)
 ```
 
-`Residual standard error` représente la variance résiduelle ou la variance non-expliquée par le modèle
+<br>
+
+`Residual standard error` représente la variance résiduelle ou la variance non-expliquée par le modèle. Remarquez que cette valeur n'est pas très différente de la valeur de 5 qui a été utilisée pour simuler le modèle.
 
 
 #### Vérification des suppositions de bases
 
-On peut utiliser la fonction `plot` qui lorsqu'appliquée sur un objet de classe `lm` produira des graphiques permettant de vérifier certaines suppositions de bases.
+On peut utiliser la fonction `plot` qui lorsqu'elle est appliquée sur un objet de classe `lm` produira des graphiques permettant de vérifier certaines suppositions de bases ou conditions d'application.
 
 ```{r}
 
@@ -515,14 +613,12 @@ summary(m)
 
 ```
 
-<!-- les facteurs sont comparés par rapport au niveau de référence! -->
+<!-- Les facteurs sont comparés par rapport au niveau de référence! -->
 
 
 ## Comprendre son modèle avec des graphiques
 
-### Fonction `predict`
-
-La fonction `predict` sert à calculer la valeur prédite par le modèle pour chaque observation. Par exemple, ceci permet de mettre en relation les valeurs observées et les valeurs prédites:
+La fonction `predict` sert à calculer la valeur prédite par le modèle pour chaque observation. Par exemple, ceci permet de mettre en relation les valeurs observées et les valeurs prédites. La fonction `predict` dans ce cas calcule la valeur prédite par le modèle pour chaque observation dans la base de donnée.
 
 ```{r}
 
@@ -531,7 +627,7 @@ plot(d$y,predict(m))
 ```
 
 
-#### Soumettre de nouvelle valeurs
+### Soumettre de nouvelle valeurs à `predict`
 
 Plus souvent, on veut illustrer l'effet de nos variables et pour cela, il faut soumettre des valeurs à la fonction `predict`. Cette fonction est très utile lorsque l'on veut un maximum de contrôle sur les valeurs à prédire.
 
@@ -545,7 +641,8 @@ lines(x,p) # valeurs prédites
 
 ```
 
-#### Package `visreg`
+
+### Package `visreg`
 
 Le package [visreg](https://pbreheny.github.io/visreg/) permet d'illustrer facilement les prédictions d'un modèle (ou les effets marginaux des différentes variables explicatives). Il utilise en arrière-plan la fonction `predict`.
 
@@ -556,9 +653,10 @@ visreg(m)
 
 ```
 
+
 #### Package `ggeffects`
 
-Le package [ggeffects](https://strengejacke.github.io/ggeffects/index.html) permet également d'illustrer les prédictions d'un modèle, mais ce package se base sur l'utilisation du package ggplot2 pour construire les graphiques. Le principe demeure le même, en arrière-plan la fonction `predict` est utilisée. On peut également combiner les différents graphiques générés en utilisant le package [patchwork](https://patchwork.data-imaginist.com/index.html) et sa fonction `wrap_plots`.
+Le package [ggeffects](https://strengejacke.github.io/ggeffects/index.html) permet également d'illustrer les prédictions d'un modèle, mais ce package se base sur l'utilisation du package [ggplot2](https://ggplot2.tidyverse.org/) pour construire les graphiques. Le principe demeure le même: en arrière-plan la fonction `predict` est utilisée. On peut également combiner les différents graphiques générés en utilisant le package [patchwork](https://patchwork.data-imaginist.com/index.html) et sa fonction `wrap_plots`.
 
 ```{r,fig.width=8,fig.height=8}
 library(ggeffects)
@@ -590,15 +688,17 @@ summary(m)
 
 #### Illustration graphique
 
-On a une interaction significative, mais est-elle importante d'un point de vue biologique? Peut-être pas... Toujours distinguer entre la **signification statistique** et la **signification biologique**.
-
-Une valeur de p significative c'est bien beau, mais ce qui importe vraiment c'est **la taille de l'effet**.
-
 ```{r}
 
 visreg(m,"x1",by="fac",overlay=TRUE)
 
 ```
+
+<br>
+
+On a une interaction significative, mais est-elle importante d'un point de vue biologique? Peut-être pas... Toujours distinguer entre la **signification statistique** et la **signification biologique**.
+
+Une valeur de p significative c'est bien beau, mais ce qui importe vraiment c'est **la taille de l'effet**.
 
 
 ##### Interactions avec `ggeffects`
@@ -613,22 +713,27 @@ plot(g,add.data=TRUE,jitter=FALSE)
 
 #### Interprétion
 
-* Beaucoup plus facile avec un graphique qu'en regardant une table de coefficient
+* Beaucoup plus facile avec un graphique qu'en regardant une table de coefficients.
 
-* En présence d'une interaction (significative), les effets simples sont plus difficilement interprétables et ne peuvent être interpréter sans faire référence à l'interaction (à moins d'ajustements particuliers).
+* En présence d'une interaction (significative), les effets simples sont plus difficilement interprétables et ne peuvent être interprétés sans faire référence à l'interaction (à moins d'ajustements particuliers voir [Schielzeth 2010](https://doi.org/10.1111/j.2041-210X.2010.00012.x)).
 
-* Si pour deux variables impliquées dans une interaction les effets simples ne sont pas significatifs, mais que leur interaction l'est, il faut considérer que ces deux variables ont un effet.
+* Si pour deux variables impliquées dans une interaction les effets simples ne sont pas significatifs, mais que leur interaction l'est, il faut considérer que ces deux variables ont un effet même si les coefficients associés aux effets simples ne sont pas significatifs.
 
 
 ## Types d'erreurs
 
+<br>
+
 * Erreur de type I: 
+
+<br>
 
 * Erreur de type II: 
 
 <!-- le fait de rejeter l'hypothèse nulle, alors qu'elle est vraie. -->
 
 <!-- le fait de ne pas rejeter l'hypothèse nulle, alors qu'elle est fausse -->
+
 
 ### Simulations 
 
@@ -658,7 +763,7 @@ sim_model<-function(b0,b1,b2,b3){
 
 #### Simulons
 
-Ensuite, simulons `nsims` modèles fictifs et enmmagasinons ces modèles dans une liste nomée `list_models`.
+Ensuite, simulons `nsims` modèles fictifs et emmagasinons ces modèles dans une liste nommée `list_models`.
 
 ```{r}
 nsims<-500
@@ -668,8 +773,13 @@ list_models<-lapply(1:nsims,function(i){
 })
 ```
 
+<br>
+
+Si on illustre les valeurs de p obtenues pour chacun des coefficients associés aux variables $x_{n}$ à l'aide d'un histogramme, à quoi ressemblera cet histogramme?
+
 
 #### Valeurs de p obtenus
+
 
 ```{r}
 
@@ -684,13 +794,15 @@ hist(unlist(p),breaks=seq(0,1,by=0.05),xlab="Valeurs de p")
 
 ##### Conclusions
 
-* Dans une certaine proportion des cas ( = 5% ), on conclut à un effet, alors qu'il n'y en a pas pas! C'est le fameux seuil $\alpha$ de 0.05.
+* Dans une certaine proportion des cas ( ~ 5% ), on conclut à un effet, alors qu'il n'y en a pas pas! C'est le fameux seuil $\alpha$ de 0.05.
 
 * Sous l'hypothèse nulle, les valeurs de p sont distribuées uniformément entre 0 et 1.
 
 
 
 ## Extensions
+
+<br>
 
 Quelles sont les suppositions de bases qui sont susceptibles de ne pas être rencontrées?
 
@@ -702,6 +814,24 @@ Quelles sont les suppositions de bases qui sont susceptibles de ne pas être ren
 
 * Relation non-linéaire 
 
+* Etc.
+
+<br>
+
+À voir au prochain cours!
+
+
+# Liens utiles
+
+[A protocol for data exploration to avoid common statistical problems](https://doi.org/10.1111/j.2041-210X.2009.00001.x)
+
+[A protocol for conducting and presenting results of regression-type analyses](https://doi.org/10.1111/2041-210X.12577)
+
+[Applied statistics in ecology: common pitfalls and simple solutions](https://doi.org/10.1890/ES13-00160.1)
+
+[Simple means to improve the interpretability of regression coefficients](https://doi.org/10.1111/j.2041-210X.2010.00012.x)
+
+<!-- to do, modèle linéaire, simul t.test, simule CI, check début, each verif assump plot, à compléter, revise all, list Zuur papers, read Marc again -->
 
 <!--
 
@@ -714,3 +844,5 @@ Quelles sont les suppositions de bases qui sont susceptibles de ne pas être ren
 # 4. Introduction aux statistiques bayésiennes
 
 -->
+
+
