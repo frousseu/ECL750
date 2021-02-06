@@ -88,7 +88,7 @@ h1.title {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  padding-top: 800px;
+  padding-top: 80px;
   padding-bottom: 50px;
   color: DarkGreen;
   font-weight: bold;
@@ -672,7 +672,9 @@ wrap_plots(p)
 
 Dans vos mots, qu'est-ce qu'une interaction?
 
-<!-- C'est lorsque l'effet d'une variable dépend des valeurs d'une autre variable (ou de plusieurs) -->
+<br>
+
+C'est lorsque l'effet d'une variable dépend des valeurs d'une autre variable (ou de plusieurs).
 
 
 #### Un exemple
@@ -724,15 +726,15 @@ plot(g,add.data=TRUE,jitter=FALSE)
 
 <br>
 
-* Erreur de type I: 
+* Erreur de type I: rejeter l'hypothèse nulle, alors qu'elle est vraie (faux positif).
 
 <br>
 
-* Erreur de type II: 
+* Erreur de type II: ne pas rejeter l'hypothèse nulle, alors qu'elle est fausse (faux négatif). 
 
-<!-- le fait de rejeter l'hypothèse nulle, alors qu'elle est vraie. -->
+<!-- -->
 
-<!-- le fait de ne pas rejeter l'hypothèse nulle, alors qu'elle est fausse -->
+<!-- -->
 
 
 ### Simulations 
@@ -833,10 +835,154 @@ Quelles sont les suppositions de bases qui sont susceptibles de ne pas être ren
 
 <!-- to do, modèle linéaire, simul t.test, simule CI, check début, each verif assump plot, à compléter, revise all, list Zuur papers, read Marc again -->
 
-<!--
 
 # 2. Modèles linéaires généraux, généralisés et extensions
 
+## Modèles linéaires standards
+
+A general linear model is a linear combination of explanatory variables.
+
+$$y \sim \mathcal{N}(\mu, \sigma^2)$$
+
+$$\mu=\beta_0 + \beta_1 X_1 + \beta_2 X_2 + ... + \beta_n X_n$$
+
+## Modèles linéaires généraux
+
+## Modèles linéaires généralisés
+
+A generalized linear model is a linear combination of explanatory variables, but there is a *link* function $\mathcal{g}$ that relates the response to the linear predictor and the error follows a distribution from the exponential family.
+
+$$y \sim \mathcal{ExpFam}(\mu, ...)$$
+
+$$\mathcal{g}(\mu)=\beta_0 + \beta_1 x_1 + \beta_2 x_2 + ... + \beta_n x_n$$
+
+
+## Structure d'un GLM
+
+$$ y \sim f(\theta) $$
+
+<br>
+
+$$ \eta = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + ... + \beta_k x_k$$
+
+<br>
+
+$$ g(E(y)) = g(\mu) = \eta $$
+
+
+### Composante systématique
+
+$$ \eta = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + ... + \beta_k x_k$$
+
+Le prédicteur linéaire $\eta$ permet de relier les variables explicatives à la variable réponse.
+
+
+### Composante aléatoire
+
+$$ y \sim \mathcal{ExpFam}(\theta) $$
+
+Les observations $y$ suivent une distribution particulière $\mathcal{ExpFam}$ appartenant à la famille des distributions exponentielles avec des paramètres $\theta$. La distributions normale, de Poisson, Binomiale et Gamma font toutes parties de la famille des distributions exponentielles.
+
+### Fonction de lien
+
+$$ g(E(y)) = g(\mu) = \eta $$
+
+La fonction de lien (*link function*) est une transformation qui permet de relier la réponse attendue $E(y)$ (i.e. la moyenne) au prédicteur linéaire.
+
+C'est ce qui permet de relier les variables explicatives à la variable réponse.
+
+
+
+## GLM Poisson
+
+$$ y \sim \mathcal{Pois}(\lambda) $$
+
+$$ log(\lambda) = \eta = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + ... + \beta_k x_k $$
+
+On a donc des observations $y$ qui suivent une distribution de Poisson avec un paramètre $\lambda$. Une fonction de lien $log$ permet de relier linéairement les variables explicatives à la valeur attendue $\lambda$ de la variable réponse.
+
+### Distribution de Poisson
+
+Cette distribution est souvent utilisée pour décrire le nombre de fois qu'un événement survient dans un intervalle de temps ou d'espace.
+
+$$f(k,\lambda) = Pr(y = k) = \frac{\lambda^{k}e^{-\lambda}}{k!}$$
+
+Cette fonction permet de calculer la probabilité d'observer un événement $k$ fois avec une distribution de Poisson ayant un paramètre $\lambda$, autrement dit une moyenne $\lambda$.
+
+Cette distribution a la propriété que $\lambda = E(y) = Var(y)$, autrement dit, la moyenne et la variance sont égales et correspondent au paramètre $\lambda$ de la distribution.
+
+#### D'où provient-elle?
+
+```{r}
+
+library(sf)
+
+n<-200
+x<-runif(n,0,10)
+y<-runif(n,0,10)
+
+sfc <- st_sfc(st_polygon(list(rbind(c(0,0), c(10,0), c(10,10), c(0,0)))))
+grid <- st_make_grid(sfc, cellsize = 1)
+plot(grid,axes=TRUE)
+points(x,y)
+
+o<-st_intersects(grid,st_as_sf(data.frame(x,y),coords=c("x","y")))
+co<-sapply(o,length)
+
+```
+
+```{r}
+
+hist(co,breaks=seq(0,max(co),by=1),freq=FALSE)
+
+```
+
+
+### Simulons un modèle
+
+
+
+## GLM binomial
+
+## Extensions
+
+### Fonction de lien canonique
+
+## Surdispersion
+
+## Zéro-inflation
+
+## Autres distributions
+
+### Gamma
+
+### Beta
+
+### Négative binomiale
+
+## Vérification des suppositions
+
+### Simuler à partir d'un modèle
+
+### Le package DHARMa
+
+## GAM
+
+A generalized additive model has the same component as a GLM, but the linear predictor is made of non-linear functions (*smooths*) of the explanatory variables.
+
+$$y \sim \mathcal{ExpFam}(\mu,...)$$
+
+$$\mathcal{g}(\mu)=\beta_0 + \mathcal{f_1} (X_1) + \mathcal{f_2} (X_2) + ... + \mathcal{f_n}(X_n)$$
+
+There are many ways to construct these functions. Each smooth function $\mathcal{f}$ has a basis of a given dimension $\mathcal{q}$ and for a given $X$ can be written as:
+
+$$\mathcal{f} (X)=\sum_{i=1}^{\mathcal{q}} \mathcal{b_i}(X)\beta_i$$
+
+where the $\beta_i$ are arbitrary functions. Thus, a GAM is a linear combination of smooth terms. An example for a basis could be a simple cubic polynomial.
+
+$$\mathcal{f} (X)=\beta_1 + \beta_2 X + \beta_3 X^2 + \beta_4 X^3$$
+
+<!--
 
 # 3. Vraisemblance, sélection de modèles et régularisation
 
