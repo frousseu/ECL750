@@ -88,7 +88,7 @@ h1.title {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  padding-top: 80px;
+  padding-top: 800px;
   padding-bottom: 50px;
   color: DarkGreen;
   font-weight: bold;
@@ -891,7 +891,9 @@ La fonction de lien (*link function*) est une transformation qui permet de relie
 
 C'est ce qui permet de relier les variables explicatives à la variable réponse.
 
+### Fonction de lien canonique
 
+### Distribution exponentielle
 
 ## GLM Poisson
 
@@ -913,7 +915,9 @@ Cette distribution a la propriété que $\lambda = E(y) = Var(y)$, autrement dit
 
 #### D'où provient-elle?
 
-```{r}
+Simulons une disttribution de Poisson en distribuant aléatoirement des observations dans un carré 10 x 10. Ensuite, divisons ce carré en 100 cellules.
+
+```{r, message=FALSE}
 
 library(sf)
 
@@ -926,39 +930,299 @@ grid <- st_make_grid(sfc, cellsize = 1)
 plot(grid,axes=TRUE)
 points(x,y)
 
-o<-st_intersects(grid,st_as_sf(data.frame(x,y),coords=c("x","y")))
-co<-sapply(o,length)
-
 ```
+
+Ensuite, calculons le nombre d'observations par cellule et illustrons la distribution du nombre d'observations pour chaque cellule. En moyenne, on devrait retrouver 2 observations par cellule 200 obs. / 100 cell. = 2.
 
 ```{r}
 
-hist(co,breaks=seq(0,max(co),by=1),freq=FALSE)
+o<-st_intersects(grid,st_as_sf(data.frame(x,y),coords=c("x","y")))
+co<-sapply(o,length)
+hist(co,breaks=seq(-0.5,max(co)+0.5,by=1),freq=FALSE,main="",xlab="Nb d'observations")
+lines(0:max(co),dpois(0:max(co),lambda=2),type="b",cex=2)
+legend("topright",lty=c(NA,1),legend=c("Observée","Théorique"),bty="n",cex=2,pch=c(22,21),pt.bg=c("gray","white"))
 
 ```
 
+Ce serait la même chose si on simulait des observations aléatoires dans le temps et si on comptait le nb d'observations par intervalles de temps.
+
 
 ### Simulons un modèle
+
+Simulons un modèle à partir d'une distribution de Poisson.
+
+```{r}
+
+n<-100
+x<-runif(n,0,10)
+lambda<-exp(-2+0.4*x)
+y<-rpois(n,lambda)
+d<-data.frame(y,x)
+
+m<-glm(y~x,family="poisson",data=d)
+summary(m)
+
+```
+
+#### Coefficients
+
+Les coefficients estimés sont très similaires de ce qui a été utilisé pour générer le modèle.
+
+```{r}
+
+coef(m)
+
+```
+
+### Prédictions
+
+Maintenant, illustrons l'effet de la variable explicative.
+
+```{r}
+
+visreg(m)
+
+```
+
+#### Sous quelle échelle?
+
+```{r}
+
+visreg(m,scale="response")
+
+```
+
+#### `ggeffects`
+
+```{r}
+
+g<-ggpredict(m,terms=c("x [n=50]"))
+plot(g,add.data=TRUE,jitter=FALSE)
+
+```
+
+#### `predict`
+
+```{r}
+
+v<-seq(min(x),max(x),length.out=50)
+plot(y~x,data=d)
+p<-predict(m,data.frame(x=v))
+lines(v,p)
+
+```
+
+#### `predict`
+
+Par défaut, l'argument `type = "link"` et il faut spécifier ``type = "response"` pour obtenir les prédictions sous l'échelle de la réponse.
+
+```{r}
+
+v<-seq(min(x),max(x),length.out=50)
+plot(y~x,data=d)
+p<-predict(m,data.frame(x=v),type="response")
+lines(v,p)
+
+```
+
+### Suppositions de base
+
+On pourrait être tenté d'utiliser la fonction `plot` pour vérifier les conditions d'applications.
+
+```{r}
+
+par(mfrow=c(2,2),mar=c(4,4,2,2))
+plot(m)
+
+```
+
+### Quelles sont les suppositions de bases?
+
+$$ y \sim \mathcal{Pois}(\lambda) $$
+
+$$ log(\lambda) = \eta = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + ... + \beta_k x_k $$
+
+Ceratines supposition sont les mêmes que pour un modèle linéaire standard avec une distribution, mais d'autre diffèrent.
+
+#### Vérification avec DHARMa
+
+Une façon de vérifier les supposition de bases des modèles est d'utliser le modèle pour simuler des observations et ensuite comparer ces observations simulées aux observations réelles. Si les observations réelles ne ressemblent pas aux observations simulées à partir du modèle, c'est que le modèle ne représente pas bien ce qui se passe avec les données réelles et donc que qqch devrait être modifié dans le modèle.
+
+Le package [DHARMa](https://cran.r-project.org/web/packages/DHARMa/vignettes/DHARMa.html) se base sur ces simulations pour comparer les observations attendues par le modèle aux observations réelles. Plus spécifiquement, la méthode utilise les résidus quantiles pour comparer chaque observation aux observations attendues pour cette observations. Les résidus quantiles sont rapportés entre 0 et 1 et si le modèle est approprié pour les données, on devrait s'attendre à ce que les résidus soient distributés uniformément entre 0 et 1 pour toutes les observations.
+
+
+```{r,message=FALSE}
+
+library(DHARMa)
+
+s<-simulateResiduals(m)
+plot(s)
+
+```
+
+Si le modèle est appropiré pour les données, on devrait voir ici une distribution uniforme des points et il ne devrait pas y avoir de patrons particulier dans la distribution des points dans le graphique de droite. En particlier, les lignes de prédictions illustrées devraient être alignées sur les trois lignes représentant les quantiles 25, 50 et 75%. Dans le graphique quantile-quantile de gauche, les points devraient être alignés sur la droite. 
+
+##### Autres vérifications
+
+Les problèmes de sous- ou sur- dispersion et de surabondance de 0 (*zéro-inflation*) sont très fréquents avec les GLM. Ces deux fonctions de DHARMa permettent d'évaluer si les observations réelles diffèrent des observations simulées en terme de présence de 0 ou de disperison. En rouge, ce sont les observations réelles et en gris les observations simulées. Si les observations réelles sont bien en dehors des observations simulées, C'est qu'il y a un problème avec le modèle et il faut un ajustment.
+
+```{r,message=FALSE,fig.height=5,results="hold"}
+
+par(mfrow=c(1,2))
+testDispersion(s)
+testZeroInflation(s)
+
+```
 
 
 
 ## GLM binomial
 
-## Extensions
+$$ y \sim \mathcal{Binom}(n,p) $$
 
-### Fonction de lien canonique
+$$ logit(p) = log\left(\frac{p}{1-p}\right) = \eta = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + ... + \beta_k x_k $$
 
-## Surdispersion
+### Régression logistique
 
+$$ y \sim \mathcal{Binom}(1,p) = \mathcal{Bernoulli}(p)$$
+
+La distribution de Bernoulli est un cas particulier de la distribiution binomiale avec un tirage (e.g. un individu est vivant ou mort, un individu est mâle ou femelle, etc.)
+
+### Distribution binomiale
+
+$$f(k,n,p) = Pr(y = k) = \binom{n}{k}p^k(1-p)^{n-k}$$
+
+où
+
+$$\binom{n}{k}=\frac{n!}{k!(n-k)!}$$
+
+<br>
+
+Ce qui représente le nombre de façons de prendre $k$ éléments parmi $n$ éléments.
+
+<br>
+
+Cette fonction permet de calculer la probabilité d’observer $k$ succès si $n$ tirages sont faits et que la probabilité de succès est de $p$
+
+<br>
+
+Cette distribution a la propriété que $E(y) = np$ et $Var(y) = np(1-p)$ , autrement dit, la moyenne et la variance sont entièrement détemrinées par la propbabilité de succès et par le nombre de tirages. On a donc une autre distribution assez restrictive.
+
+#### Exemple
+
+Supposons qu'on tire pile (0) ou face (1) 10 fois, qu'on calcule le nombre de face et qu'on répète cette exercice 500 fois. Quelle sera la distribution du nombre de faces obtenus?
+
+```{r}
+
+n<-500
+co<-sapply(1:n,function(i){
+  s<-sample(0:1,10,prob=c(0.5,0.5),replace=TRUE)
+  sum(s) # on additione les faces (1)
+})
+
+hist(co,breaks=seq(-0.5,max(co)+0.5,by=1),freq=FALSE,main="",xlab="Nb de faces")
+lines(0:max(co),dbinom(0:max(co),prob=0.5,size=10),type="b",cex=2)
+legend("topright",lty=c(NA,1),legend=c("Observée","Théorique"),bty="n",cex=2,pch=c(22,21),pt.bg=c("gray","white"))
+
+```
+
+### Simulons un modèle
+
+```{r}
+
+logit<-function(p){
+  log(p/(1-p))
+}
+
+inv.logit<-function(x){
+   exp(x)/(1+exp(x))  
+}
+
+n<-200
+x<-runif(n,0,10)
+z<--2+0.5*x
+y<-rbinom(n,size=1,prob=inv.logit(z))
+
+d<-data.frame(y,x)
+
+m<-glm(y~x,family="binomial",data=d)
+summary(m)
+
+```
+
+#### Visualisons
+
+Avec `visreg`.
+
+```{r}
+
+par(mfrow=c(1,2))
+visreg(m)
+visreg(m,scale="response")
+
+```
+
+Avec `ggeffects`
+
+```{r}
+
+g<-ggpredict(m,terms=c("x [n=50]"))
+plot(g,add.data=TRUE)
+
+```
+
+### Suppositions de base
+
+```{r,fig.height=8,results="hold"}
+
+par(mfrow=c(2,2))
+s<-simulateResiduals(m)
+testUniformity(s)
+testQuantiles(s)
+testDispersion(s)
+testZeroInflation(s)
+
+```
+
+## Problèmes
+
+### Surdispersion
+
+C'est lorsque les données sont plus variables que ce qui est attendu par le modèle. Les distribution de Poisson et binomiales sont très restrictives et ceci est très fréquent.
+
+En général, une surdisperion ignorée fera en sorte que l'incertitude sera sous-estimée (trop de confiance dans nos résulats).
+
+Plusieurs causes possibles (variables manquantes, phénomènes d'aggrégation, hétérogénéité, etc.)
+
+Solutions: Poisson -> Négative binomiale (`glm.nb`, `glmmTMB`, `brms`, etc.)
+
+Binomiale -> Béta binomiale (`glmmTMB`, `brms`, etc.)
+
+Obervation-level random effects (OLRE) (Harrison et al.)
+
+### Sousdisperion
+
+C'est lorsque les données sont moins variables que ce qui est attendu par le modèle. Ceci est beaucoup plus rare et probablement moijns dommageables (e.g. taille de couvée). 
+
+En général, une sous-dispersion ignorée fera en sorte que l'incertitude sera surestimée (trop conservateurs dans nos résultats).
+
+Solutions: Poisson -> `glmmTMB, family = "compois"`
+ 
 ## Zéro-inflation
 
-## Autres distributions
+Surabondance de 0 dans les observations par rapport à ce qui est attendu par le modèle. Il est possible aussi d'avoir une sous-abondance de 0 ou encore une surabondance de 1, mais c'est un peu plus rare.
 
-### Gamma
+Solutions: modèle *zéro-inflated* (`glmmTMB`,`pscl`,`brms`,etc.)
 
-### Beta
+## Extensions
 
-### Négative binomiale
+Gamma:
+
+Beta:
+
+Tweedie:
+
+
 
 ## Vérification des suppositions
 
