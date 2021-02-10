@@ -88,7 +88,7 @@ h1.title {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  padding-top: 80px;
+  padding-top: 800px;
   padding-bottom: 50px;
   color: DarkGreen;
   font-weight: bold;
@@ -123,7 +123,7 @@ h5 {
 
 ```{r setup, include=FALSE}
 library(scales)
-knitr::opts_chunk$set(echo=TRUE, tidy=TRUE, error=TRUE, fig.align="center", fig.width=8, fig.height=6)
+knitr::opts_chunk$set(echo=TRUE, tidy=TRUE, error=TRUE, fig.align="center", fig.width=8, fig.height=6, cache=FALSE)
 options(width=150)
 ```
 
@@ -827,26 +827,45 @@ Quelles sont les suppositions de bases qui sont susceptibles de ne pas être ren
 
 ## Modèles linéaires standards
 
-A general linear model is a linear combination of explanatory variables.
-
 $$y \sim \mathcal{N}(\mu, \sigma^2)$$
 
-$$\mu=\beta_0 + \beta_1 X_1 + \beta_2 X_2 + ... + \beta_n X_n$$
+$$\mu=\beta_0 + \beta_1 X_1 + \beta_2 X_2 + ... + \beta_k X_k$$
+
+
+### Formulation matricielle
+
+$$y \sim \mathcal{N}(\beta\mathbf{X}, \mathbf{I}\sigma^2)$$
+
+<br>
+
+$\mathbf{I}$ est une matrice identité qui a pour effet d'assigner une variance égale $\sigma^2$ à toutes les observations.
+
 
 ## Modèles linéaires généraux
 
+$$y \sim \mathcal{N}(\beta\mathbf{X}, \mathbf{\Sigma})$$
+
+$\mathbf{\Sigma}$ est une matrice de variance-covariance qui permet beaucoup plus de flexibilité en terme de variance et de dépendence entre les observations. En général, des paramètres seront associés à la matrice $\mathbf{\Sigma}$ pour permettre différentes situations. Dans le cas d'un modèle linéaire standard, on a $\mathbf{\Sigma} = \mathbf{I}\sigma^2$. 
+
+<br>
+
+Ex.: variance différente pour les niveaux d'un facteur, variance augmentant avec certaines valeurs de $x$, autocorrélation temporelle ou spatiale, etc.
+
+<br>
+
+Ces différentes situations peuvent être obtenues entre autres avec les packages [nlme](https://CRAN.R-project.org/package=nlme) (fonctions `gls` ou `lme`) ou [glmmTMB](https://cran.r-project.org/web/packages/glmmTMB/vignettes/covstruct.html).   
+
+
 ## Modèles linéaires généralisés (GLM)
 
-A generalized linear model is a linear combination of explanatory variables, but there is a *link* function $\mathcal{g}$ that relates the response to the linear predictor and the error follows a distribution from the exponential family.
+$$y \sim \mathcal{ExpFam}(\theta, ...)$$
 
-$$y \sim \mathcal{ExpFam}(\mu, ...)$$
-
-$$\mathcal{g}(\mu)=\beta_0 + \beta_1 x_1 + \beta_2 x_2 + ... + \beta_n x_n$$
+$$\mathcal{g}(\mu)=\beta_0 + \beta_1 x_1 + \beta_2 x_2 + ... + \beta_k x_k$$
 
 
 ## Structure d'un GLM
 
-$$ y \sim f(\theta) $$
+$$y \sim \mathcal{ExpFam}(\theta, ...)$$
 
 <br>
 
@@ -868,27 +887,37 @@ Le prédicteur linéaire $\eta$ permet de relier les variables explicatives à l
 
 $$ y \sim \mathcal{ExpFam}(\theta) $$
 
-Les observations $y$ suivent une distribution particulière $\mathcal{ExpFam}$ appartenant à la famille des distributions exponentielles avec des paramètres $\theta$. La distributions normale, de Poisson, Binomiale et Gamma font toutes parties de la famille des distributions exponentielles.
+<br>
+
+Les observations $y$ suivent une distribution particulière appartenant à la famille des distributions exponentielles avec des paramètres $\theta$. La distributions normale, de Poisson, Binomiale et Gamma font parties de la famille des distributions exponentielles.
+
 
 ### Fonction de lien
 
 $$ g(E(y)) = g(\mu) = \eta $$
 
+<br>
+
 La fonction de lien (*link function*) est une transformation qui permet de relier la réponse attendue $E(y)$ (i.e. la moyenne) au prédicteur linéaire.
 
-C'est ce qui permet de relier les variables explicatives à la variable réponse.
+<br>
 
-### Fonction de lien canonique
+C'est ce qui permet de relier les variables explicatives à la variable réponse. Pour chaque distribution qui pourrait être utilisée dans de cadre d'un GLM, une fonction de lien dite canonique est utilisée par défaut, mais il existe plusieurs fonctions de liens possibles.
 
-### Distribution exponentielle
+
 
 ## GLM Poisson
 
 $$ y \sim \mathcal{Pois}(\lambda) $$
 
+<br>
+
 $$ log(\lambda) = \eta = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + ... + \beta_k x_k $$
 
-On a donc des observations $y$ qui suivent une distribution de Poisson avec un paramètre $\lambda$. Une fonction de lien $log$ permet de relier linéairement les variables explicatives à la valeur attendue $\lambda$ de la variable réponse.
+<br>
+
+On a donc des observations $y$ qui suivent une distribution de Poisson avec un paramètre $\lambda$. Une fonction de lien $log$ permet de relier linéairement les variables explicatives à la valeur attendue $E(y) = \lambda$ de la variable réponse.
+
 
 ### Distribution de Poisson
 
@@ -896,13 +925,14 @@ Cette distribution est souvent utilisée pour décrire le nombre de fois qu'un �
 
 $$f(k,\lambda) = Pr(y = k) = \frac{\lambda^{k}e^{-\lambda}}{k!}$$
 
-Cette fonction permet de calculer la probabilité d'observer un événement $k$ fois avec une distribution de Poisson ayant un paramètre $\lambda$, autrement dit une moyenne $\lambda$.
+Cette fonction permet de calculer la probabilité d'observer un événement $k$ fois avec une distribution de Poisson ayant un paramètre $\lambda$. La moyenne de cette distribution est égale à $\lambda$.
 
-Cette distribution a la propriété que $\lambda = E(y) = Var(y)$, autrement dit, la moyenne et la variance sont égales et correspondent au paramètre $\lambda$ de la distribution.
+Cette distribution a la propriété que $\lambda = E(y) = Var(y)$. Autrement dit, la moyenne et la variance sont égales et correspondent au paramètre $\lambda$ de la distribution.
+
 
 #### D'où provient-elle?
 
-Simulons une disttribution de Poisson en distribuant aléatoirement des observations dans un carré 10 x 10. Ensuite, divisons ce carré en 100 cellules.
+Simulons une distribution de Poisson en distribuant aléatoirement des observations dans un carré 10 x 10. Ensuite, divisons ce carré en 100 cellules.
 
 ```{r, message=FALSE}
 
@@ -919,15 +949,18 @@ points(x,y)
 
 ```
 
-Ensuite, calculons le nombre d'observations par cellule et illustrons la distribution du nombre d'observations pour chaque cellule. En moyenne, on devrait retrouver 2 observations par cellule 200 obs. / 100 cell. = 2.
 
-```{r}
+#### Nb d'observations par cellule
+
+Ensuite, calculons le nombre d'observations par cellule et illustrons la distribution du nombre d'observations pour chaque cellule. En moyenne, on devrait retrouver 2 observations par cellule (200 obs. / 100 cell. = 2).
+
+```{r,fig.height=4,fig.width=4}
 
 o<-st_intersects(grid,st_as_sf(data.frame(x,y),coords=c("x","y")))
 co<-sapply(o,length)
 hist(co,breaks=seq(-0.5,max(co)+0.5,by=1),freq=FALSE,main="",xlab="Nb d'observations")
 lines(0:max(co),dpois(0:max(co),lambda=2),type="b",cex=2)
-legend("topright",lty=c(NA,1),legend=c("Observée","Théorique"),bty="n",cex=2,pch=c(22,21),pt.bg=c("gray","white"))
+legend("topright",lty=c(NA,1),legend=c("Observée","Théorique"),bty="n",cex=1,pch=c(22,21),pt.bg=c("gray","white"))
 
 ```
 
@@ -953,7 +986,7 @@ summary(m)
 
 #### Coefficients
 
-Les coefficients estimés sont très similaires de ce qui a été utilisé pour générer le modèle.
+Les coefficients estimés sont très similaires à ce qui a été utilisé pour générer le modèle (-2 et 0.4).
 
 ```{r}
 
@@ -961,15 +994,17 @@ coef(m)
 
 ```
 
-### Prédictions
 
-Maintenant, illustrons l'effet de la variable explicative.
+#### Prédictions
+
+Illustrons l'effet de la variable explicative.
 
 ```{r}
 
 visreg(m)
 
 ```
+
 
 #### Sous quelle échelle?
 
@@ -979,6 +1014,23 @@ visreg(m,scale="response")
 
 ```
 
+#### Échelle du prédicteur linéaire ou de la réponse
+
+```{r,fig.height=5}
+
+par(mfrow=c(1,2))
+visreg(m)
+visreg(m,scale="response")
+
+```
+
+Remarquez que dans le graphique de gauche, les valeurs en y sont négatives ou positives. En fait, la fonction log permet de transformer les comptes allant de 0 à l'$+\infty$ en valeurs allant de $-\infty$ à $+\infty$. Sous l'échelle log, les valeurs entre 0 et 1 sont négatives et les valeurs supérieures à 1 sont positives. 
+
+$$ log(1) = 0 $$
+$$ log(0.1) = -2.302586 $$
+$$ log(5) =  1.609438 $$
+
+
 #### `ggeffects`
 
 ```{r}
@@ -987,6 +1039,7 @@ g<-ggpredict(m,terms=c("x [n=50]"))
 plot(g,add.data=TRUE,jitter=FALSE)
 
 ```
+
 
 #### `predict`
 
@@ -999,9 +1052,10 @@ lines(v,p)
 
 ```
 
-#### `predict`
 
-Par défaut, l'argument `type = "link"` et il faut spécifier ``type = "response"` pour obtenir les prédictions sous l'échelle de la réponse.
+#### Argument `type`
+
+Par défaut, l'argument `type = "link"` et il faut spécifier `type = "response"` pour obtenir les prédictions sous l'échelle de la réponse.
 
 ```{r}
 
@@ -1011,6 +1065,7 @@ p<-predict(m,data.frame(x=v),type="response")
 lines(v,p)
 
 ```
+
 
 ### Suppositions de base
 
@@ -1023,13 +1078,15 @@ plot(m)
 
 ```
 
+
 ### Quelles sont les suppositions de bases?
 
 $$ y \sim \mathcal{Pois}(\lambda) $$
 
 $$ log(\lambda) = \eta = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + ... + \beta_k x_k $$
 
-Ceratines supposition sont les mêmes que pour un modèle linéaire standard avec une distribution, mais d'autre diffèrent.
+Certaines suppositions sont les mêmes que pour un modèle linéaire standard avec une distribution, mais d'autres diffèrent.
+
 
 #### Vérification avec DHARMa
 
@@ -1047,7 +1104,8 @@ plot(s)
 
 ```
 
-Si le modèle est appropiré pour les données, on devrait voir ici une distribution uniforme des points et il ne devrait pas y avoir de patrons particulier dans la distribution des points dans le graphique de droite. En particlier, les lignes de prédictions illustrées devraient être alignées sur les trois lignes représentant les quantiles 25, 50 et 75%. Dans le graphique quantile-quantile de gauche, les points devraient être alignés sur la droite. 
+Si le modèle est appropré pour les données, on devrait voir ici une distribution uniforme des points et il ne devrait pas y avoir de patrons particuliers dans la distribution des points dans le graphique de droite. En particulier, les lignes de prédictions illustrées devraient être alignées sur les trois lignes représentant les quantiles 25, 50 et 75%. Dans le graphique quantile-quantile de gauche, les points devraient être alignés sur la droite. 
+
 
 ##### Autres vérifications
 
@@ -1062,18 +1120,19 @@ testZeroInflation(s)
 ```
 
 
-
 ## GLM binomial
 
 $$ y \sim \mathcal{Binom}(n,p) $$
 
 $$ logit(p) = log\left(\frac{p}{1-p}\right) = \eta = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + ... + \beta_k x_k $$
 
+
 ### Régression logistique
 
 $$ y \sim \mathcal{Binom}(1,p) = \mathcal{Bernoulli}(p)$$
 
 La distribution de Bernoulli est un cas particulier de la distribiution binomiale avec un tirage (e.g. un individu est vivant ou mort, un individu est mâle ou femelle, etc.)
+
 
 ### Distribution binomiale
 
@@ -1095,11 +1154,12 @@ Cette fonction permet de calculer la probabilité d’observer $k$ succès si $n
 
 Cette distribution a la propriété que $E(y) = np$ et $Var(y) = np(1-p)$ , autrement dit, la moyenne et la variance sont entièrement détemrinées par la propbabilité de succès et par le nombre de tirages. On a donc une autre distribution assez restrictive.
 
+
 #### Exemple
 
-Supposons qu'on tire pile (0) ou face (1) 10 fois, qu'on calcule le nombre de face et qu'on répète cette exercice 500 fois. Quelle sera la distribution du nombre de faces obtenus?
+Supposons qu'on tire pile (0) ou face (1) 10 fois et qu'on calcule le nombre de face et qu'on répète cette exercice 500 fois. Quelle sera la distribution du nombre de faces obtenus?
 
-```{r}
+```{r, fig.height=4,fig.width=4}
 
 n<-500
 co<-sapply(1:n,function(i){
@@ -1109,9 +1169,10 @@ co<-sapply(1:n,function(i){
 
 hist(co,breaks=seq(-0.5,max(co)+0.5,by=1),freq=FALSE,main="",xlab="Nb de faces")
 lines(0:max(co),dbinom(0:max(co),prob=0.5,size=10),type="b",cex=2)
-legend("topright",lty=c(NA,1),legend=c("Observée","Théorique"),bty="n",cex=2,pch=c(22,21),pt.bg=c("gray","white"))
+legend("topright",lty=c(NA,1),legend=c("Observée","Théorique"),bty="n",cex=1,pch=c(22,21),pt.bg=c("gray","white"))
 
 ```
+
 
 ### Simulons un modèle
 
@@ -1137,10 +1198,10 @@ summary(m)
 
 ```
 
+
 #### Visualisation
 
-Avec `visreg`.
-
+Avec `visreg`
 
 ```{r,fig.height=5}
 
@@ -1154,6 +1215,7 @@ Remarquez que dans le graphique de gauche, les valeurs en y sont négatives ou p
 
 $$ log\left(\frac{p}{1-p}\right) = log\left(\frac{0.5}{1-0.5}\right) = log(1) = 0 $$
 
+
 #### Visualisation
 
 Avec `ggeffects`
@@ -1164,6 +1226,7 @@ g<-ggpredict(m,terms=c("x [n=50]"))
 plot(g,add.data=TRUE)
 
 ```
+
 
 ### Suppositions de base
 
@@ -1183,13 +1246,14 @@ testZeroInflation(s)
 
 Les problèmes les plus fréquents sont la **surdispersion** et la **surabondance de zéros** (*zero-inflation*)
 
+
 ### Surdispersion
 
-C'est lorsque les données sont plus variables que ce qui est attendu par le modèle. Les distribution de Poisson et binomiales sont très restrictives et ceci est très fréquent.
+C'est lorsque les données sont plus variables que ce qui est attendu par le modèle. Les distribution de Poisson et binomiale sont très restrictives par rapport à leur variance et les problèmes de surdispersion sont très fréquents.
 
 <br>
 
-En général, une surdisperion ignorée fera en sorte que l'incertitude sera sous-estimée (trop de confiance dans nos résulats).
+En général, une surdisperion ignorée fera en sorte que l'incertitude sera sous-estimée (trop de confiance dans nos résultats).
 
 <br>
 
@@ -1227,7 +1291,7 @@ plot(g,add.data=TRUE)
 
 #### Vérification avec DHARMa
 
-Les résidus ne sont clairement pas distributés uniformément sur le second graphique et la surdipersion est évidente sur le 3e graphique.
+Les résidus ne sont clairement pas distributés uniformément sur le second graphique et la surdispersion est évidente sur le 3e graphique.
 
 ```{r,fig.width=12,fig.height=3,results='hide',fig.keep='all'}
 
@@ -1259,29 +1323,38 @@ testZeroInflation(s)
 
 ```
 
+
 ### Sousdisperion
 
 C'est lorsque les données sont moins variables que ce qui est attendu par le modèle. Ceci est beaucoup plus rare et probablement moins dommageable (e.g. taille de couvée/portée chez les oiseaux/mammifères voir [Brooks et al. 2019](https://doi.org/10.1002/ecy.2706)). 
 
 <br>
 
-En général, une sous-dispersion ignorée fera en sorte que l'incertitude sera surestimée (trop conservateurs dans nos résultats) ce qui est un peu moins grave.
+En général, une sous-dispersion ignorée fera en sorte que l'incertitude sera surestimée (trop conservateurs dans nos résultats) ce qui est un moindre mal.
 
 <br>
 
-Solutions: Poisson -> `glmmTMB, family = "compois"`
+Solutions: 
+
+Poisson -> `glmmTMB, family = "compois"`
  
  
-## Zéro-inflation
+### Zéro-inflation
 
 Surabondance de 0 dans les observations par rapport à ce qui est attendu par le modèle. Il est possible aussi d'avoir une sous-abondance de 0 et/ou encore une surabondance de 1, mais ce dernier cas est un peu plus rare.
 
 <br>
 
-Solutions: modèle *zero-inflated* (`glmmTMB`,`pscl`,`brms`, etc.)
+Solutions: 
+
+modèle *zero-inflated* (`glmmTMB`,`pscl`,`brms`, etc.)
+
+<br>
+
+À noter qu'une surdipersion peut être due à une surabondance de 0 et vice-versa. Ce sont deux problèmes qui peuvent interagir.
 
 
-## Extensions
+### Extensions
 
 <br>
 
@@ -1326,9 +1399,13 @@ Voir [Douma & Weedon 2019](https://doi.org/10.1111/2041-210X.13234)
 
 Les GAMs (*Generalized Additive Models*) sont utiles lorsque la relation entre les variables explicatives et la variable réponse est non-linéaire ou complexe et qu'elle ne peut pas être décrite à l'aide d'un modèle théorique.
 
+<br>
+
 Des exemples? 
 
-Pour décrire le lien entre une variable $x$ et la variable réponse, des fonctions de lissage sont utilisées (*smooth functions*)
+<br>
+
+Pour décrire le lien entre une variable $x$ et la variable réponse, des fonctions de lissage sont utilisées (*smooth functions*).
 
 
 
@@ -1404,34 +1481,28 @@ legend("topleft",lwd=1,cex=2,col=2:4,legend=c(expression(x^2),expression(x^3),ex
 
 Maintenant, utilisons plutôt un GAM avec la fonction `gam` du package [mgcv](https://CRAN.R-project.org/package=mgcv).
 
-```{r}
+```{r,message=FALSE}
 
 library(mgcv)
 
 plot(y~x,data=d,xlab="x",ylab="y",col="grey60")
 lines(v,f(v),lwd=2)
 
-g<-gam(y~s(x),data=d) # le s veut dire smooth de x
+m<-gam(y~s(x),data=d) # le s veut dire smooth de x
 
-p<-predict(g,data.frame(x=v))
+p<-predict(m,data.frame(x=v))
 lines(v,p,col="red")
 
 ```
 
 
-
-### Comment ça marche?
-
-**Generalized additive models**
-
+### Formulation
 
 On a un prédicteur linéaire fait de fonctions non-linéaires (*smooths*) des variables explicatives.
 
 $$y \sim \mathcal{ExpFam}(\mu,...)$$
 
 $$\mathcal{g}(\mu)=\beta_0 + \mathcal{f_1} (X_1) + \mathcal{f_2} (X_2) + ... + \mathcal{f_n}(X_n)$$
-
-There are many ways to construct these functions. Each smooth function $\mathcal{f}$ has a basis of a given dimension $\mathcal{q}$ and for a given $X$ can be written as:
 
 Il y a plusieurs façons de construire ces fonctions. Chaque fonction $\mathcal{f}$ a une base d'une dimension donnée $\mathcal{q}$ pour une variable $X$.
 
@@ -1441,61 +1512,42 @@ où les $\beta_i$ sont des fonctions arbitraires. Ainsi, un GAM est une combinai
 
 $$\mathcal{f} (X)=\beta_1 + \beta_2 X + \beta_3 X^2 + \beta_4 X^3$$
 
-<hr>
 
-#### GAM construction
+#### Fonctions de base?
 
-To have a slightly better understanding of what a GAM may represent, let's decompose the data we studied in the example into sections and fit cubic polynomial to each.
+Ici, on extrait les fonctions de bases du modèle (*basis functions*). 
 
 ```{r}
+mm <- predict(m, type = "lpmatrix")
 
-plot(y~x,data=d,xlab="x",ylab="y",col="grey60")
-knots<-seq(min(d$x),max(d$x),length.out=4)
-b<-cut(d$x,breaks=knots)
-abline(v=knots,lty=2,col="grey60")
-
-d$b<-b
-
-l<-split(d,d$b)
-
-invisible(lapply(l,function(i){
-  m<-lm(y~poly(x,3),data=i)  
-  v<-seq(min(i$x),max(i$x),by=0.1)
-  p<-predict(m,data.frame(x=v))
-  lines(v,p)
-}))
-
-```
-
-<hr>
-
-We now have different pieces fitted to each section. But the pieces need to be smoothly connected together to form [splines](https://en.wikipedia.org/wiki/Spline_(mathematics)) which are piecewise polynomial curves. Without entering into details, these pieces are connected using constraints on first- and second-order derivatives to ensure smooth connections. These connections are made at **knots**. There are several ways to determine the number of knots and it may also depend on the type of splines used.
-
-Now, let's go back to back to our gam model.
-```{r}
-# extract the bases
-mm <- predict(g, type = "lpmatrix")
-
-# plot them
 matplot(d$x,mm[,-1],type="l",ylab="Basis functions")
 
-# add a legend
 nn <- ncol(mm[,-1])
 legend("top",horiz=TRUE,colnames(mm[,-1]),cex=0.8,col=seq_len(nn),lty=seq_len(nn),inset=c(0,-0.1),xpd=TRUE,bty="n")
 ```
 
-<hr>
+
+#### Combinons ces fonctions
+
+On les combine ensuite avec les paramètres du modèle pour estimer la relation complexe entre x et y.
 
 ```{r}
 plot(y~x,data=d)
-lines(d$x,mm%*%g$coefficients) # combine the linear predictor
+lines(d$x,mm%*%m$coefficients)
 ```
 
 
 <!-- One might ask, why use piecewise polynomial instead of a high degree polynomial fitted to the whole data? High degree polynomials can lead to unwanted oscillations, notably at the edges of predictions. For example, see [Runge's phenomenon](https://en.wikipedia.org/wiki/Runge%27s_phenomenon).   -->
 
-#### Ça sert à quoi?
+#### Pourquoi ?
 
+Pourquoi utiliser les GAMs vs. la régression polynomiale?
+
+- Régression polynomiale plus instable et subjective.
+
+<br>
+
+Détermination automatique du niveau optimal de lissage (avec le package mgcv).
 
 
 #### `mgcv`
@@ -1512,21 +1564,12 @@ Le package `mgcv` est très bien documenté et son fichier d'aide contient beauc
  
 `?mgcv.FAQ`  questions fréquemment posées
 
-<hr>
+<!--
 
-GCV stands for **G**eneralized **C**ross-**V**alidation. This is one of the procedure that determines the optimal amount of smoothing and it is done automatically by the mgcv algorithms. 
+### La fonction `gam`
 
-Generally speaking, cross-validation is a model validation technique for assessing how well a model will perform on an independent dataset. For example, this can be done by running a model on a random partition of the data (say 90%, the training data) and then predict the rest of the data (10%, the validation data) and calcute the prediction errors. There are several different ways of doing this. Another is to run the model by removing a single observation at a time and then try to predict that observation with the model (*leave-one-out cross-validation*). Intuitively, GCV is similar, but it is done in a more computationally efficient way.
+Formulation similaire à un modèle linéaire stantard. On peut également inclure des variables sans fonctions de lissages.
 
-Thus, one important advantage of using gam and mgcv is that the optimal level of smoothness is automatically determined. Beware that the level of smoothness determined by this method may not be appropriate when the is collinearity, non-independence or for small sample sizes.
-
-Other methods than GCV are now available. Type `?gam.selection` for more detailed information on the different methods possible.
-
-<hr>
-
-### The `gam` function
-
-Standard non-smoothed variables can go in the `gam` formula. In this case, the ouput returned is similar to the `lm` output.
 ```{r}
 g<-gam(y~x,data=d)
 summary(g)
@@ -1599,7 +1642,7 @@ All families available in GLMs are also available in GAMs and others are also av
 `?family.mgcv`
 
 
-
+-->
 
 
 
