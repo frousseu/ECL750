@@ -88,7 +88,7 @@ h1.title {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  padding-top: 800px;
+  padding-top: 80px;
   padding-bottom: 50px;
   color: DarkGreen;
   font-weight: bold;
@@ -823,20 +823,7 @@ Quelles sont les suppositions de bases qui sont susceptibles de ne pas être ren
 À voir au prochain cours!
 
 
-# Liens utiles
-
-[A protocol for data exploration to avoid common statistical problems](https://doi.org/10.1111/j.2041-210X.2009.00001.x)
-
-[A protocol for conducting and presenting results of regression-type analyses](https://doi.org/10.1111/2041-210X.12577)
-
-[Applied statistics in ecology: common pitfalls and simple solutions](https://doi.org/10.1890/ES13-00160.1)
-
-[Simple means to improve the interpretability of regression coefficients](https://doi.org/10.1111/j.2041-210X.2010.00012.x)
-
-<!-- to do, modèle linéaire, simul t.test, simule CI, check début, each verif assump plot, à compléter, revise all, list Zuur papers, read Marc again -->
-
-
-# 2. Modèles linéaires généraux, généralisés et extensions
+# 2. Modèles linéaires généralisés et extensions
 
 ## Modèles linéaires standards
 
@@ -848,7 +835,7 @@ $$\mu=\beta_0 + \beta_1 X_1 + \beta_2 X_2 + ... + \beta_n X_n$$
 
 ## Modèles linéaires généraux
 
-## Modèles linéaires généralisés
+## Modèles linéaires généralisés (GLM)
 
 A generalized linear model is a linear combination of explanatory variables, but there is a *link* function $\mathcal{g}$ that relates the response to the linear predictor and the error follows a distribution from the exponential family.
 
@@ -1066,7 +1053,7 @@ Si le modèle est appropiré pour les données, on devrait voir ici une distribu
 
 Les problèmes de sous- ou sur- dispersion et de surabondance de 0 (*zéro-inflation*) sont très fréquents avec les GLM. Ces deux fonctions de DHARMa permettent d'évaluer si les observations réelles diffèrent des observations simulées en terme de présence de 0 ou de disperison. En rouge, ce sont les observations réelles et en gris les observations simulées. Si les observations réelles sont bien en dehors des observations simulées, C'est qu'il y a un problème avec le modèle et il faut un ajustment.
 
-```{r,message=FALSE,fig.height=5,results="hold"}
+```{r,message=FALSE,fig.height=5,results='hide',fig.keep='all'}
 
 par(mfrow=c(1,2))
 testDispersion(s)
@@ -1150,17 +1137,24 @@ summary(m)
 
 ```
 
-#### Visualisons
+#### Visualisation
 
 Avec `visreg`.
 
-```{r}
+
+```{r,fig.height=5}
 
 par(mfrow=c(1,2))
 visreg(m)
 visreg(m,scale="response")
 
 ```
+
+Remarquez que dans le graphique de gauche, les valeurs en y sont négatives ou positives. En fait, la fonction logit permet de transformer les probabilités allant de 0 à 1 en valeurs allant de $-\infty$ à $+\infty$. Sous l'échelle logit, une valeur de 0 corrrespond à une probabilité de 0.5.
+
+$$ log\left(\frac{p}{1-p}\right) = log\left(\frac{0.5}{1-0.5}\right) = log(1) = 0 $$
+
+#### Visualisation
 
 Avec `ggeffects`
 
@@ -1173,7 +1167,7 @@ plot(g,add.data=TRUE)
 
 ### Suppositions de base
 
-```{r,fig.height=8,results="hold"}
+```{r,fig.height=8,results='hide',fig.keep='all'}
 
 par(mfrow=c(2,2))
 s<-simulateResiduals(m)
@@ -1184,55 +1178,254 @@ testZeroInflation(s)
 
 ```
 
+
 ## Problèmes
+
+Les problèmes les plus fréquents sont la **surdispersion** et la **surabondance de zéros** (*zero-inflation*)
 
 ### Surdispersion
 
 C'est lorsque les données sont plus variables que ce qui est attendu par le modèle. Les distribution de Poisson et binomiales sont très restrictives et ceci est très fréquent.
 
+<br>
+
 En général, une surdisperion ignorée fera en sorte que l'incertitude sera sous-estimée (trop de confiance dans nos résulats).
 
-Plusieurs causes possibles (variables manquantes, phénomènes d'aggrégation, hétérogénéité, etc.)
+<br>
 
-Solutions: Poisson -> Négative binomiale (`glm.nb`, `glmmTMB`, `brms`, etc.)
+Plusieurs causes possibles (variables explicatives manquantes, phénomènes d'aggrégation, hétérogénéité, etc.)
+
+<br>
+
+Solutions: 
+
+Poisson -> Négative binomiale (`glm.nb`, `glmmTMB`, `brms`, etc.)
 
 Binomiale -> Béta binomiale (`glmmTMB`, `brms`, etc.)
 
-Obervation-level random effects (OLRE) (Harrison et al.)
+*Obervation-Level Random Effects* (OLRE) (voir [Harrison 2015](https://doi.org/10.7717/peerj.1114) et [Harrison 2014](https://doi.org/10.7717/peerj.616)).
+
+
+#### Exemple
+
+Voici un exemple de GLM de Poisson avec de la surdispersion. Pour créer cette surdispersion, j'utilise une distribution négative binomiale pour générer les observations au lieu d'une distribution de Poisson. 
+
+```{r,fig.width=6,fig.height=5}
+
+n<-100
+x<-runif(n,0,10)
+lambda<-exp(-2+0.4*x)
+y<-rnbinom(n,mu=lambda,size=0.5) # 
+d<-data.frame(y,x)
+
+m<-glm(y~x,family="poisson",data=d)
+g<-ggpredict(m,terms="x")
+plot(g,add.data=TRUE)
+
+```
+
+
+#### Vérification avec DHARMa
+
+Les résidus ne sont clairement pas distributés uniformément sur le second graphique et la surdipersion est évidente sur le 3e graphique.
+
+```{r,fig.width=12,fig.height=3,results='hide',fig.keep='all'}
+
+s<-simulateResiduals(m)
+par(mfrow=c(1,4))
+testUniformity(s)
+testQuantiles(s)
+testDispersion(s)
+testZeroInflation(s)
+
+```
+
+
+#### Correction avec glmmTMB
+
+```{r,fig.width=12,fig.height=3,results='hide',fig.keep='all'}
+
+library(glmmTMB)
+
+m<-glmmTMB(y~x,family="nbinom1",data=d)
+
+s<-simulateResiduals(m)
+
+par(mfrow=c(1,4))
+testUniformity(s)
+testQuantiles(s)
+testDispersion(s)
+testZeroInflation(s)
+
+```
 
 ### Sousdisperion
 
-C'est lorsque les données sont moins variables que ce qui est attendu par le modèle. Ceci est beaucoup plus rare et probablement moijns dommageables (e.g. taille de couvée). 
+C'est lorsque les données sont moins variables que ce qui est attendu par le modèle. Ceci est beaucoup plus rare et probablement moins dommageable (e.g. taille de couvée/portée chez les oiseaux/mammifères voir [Brooks et al. 2019](https://doi.org/10.1002/ecy.2706)). 
 
-En général, une sous-dispersion ignorée fera en sorte que l'incertitude sera surestimée (trop conservateurs dans nos résultats).
+<br>
+
+En général, une sous-dispersion ignorée fera en sorte que l'incertitude sera surestimée (trop conservateurs dans nos résultats) ce qui est un peu moins grave.
+
+<br>
 
 Solutions: Poisson -> `glmmTMB, family = "compois"`
  
+ 
 ## Zéro-inflation
 
-Surabondance de 0 dans les observations par rapport à ce qui est attendu par le modèle. Il est possible aussi d'avoir une sous-abondance de 0 ou encore une surabondance de 1, mais c'est un peu plus rare.
+Surabondance de 0 dans les observations par rapport à ce qui est attendu par le modèle. Il est possible aussi d'avoir une sous-abondance de 0 et/ou encore une surabondance de 1, mais ce dernier cas est un peu plus rare.
 
-Solutions: modèle *zéro-inflated* (`glmmTMB`,`pscl`,`brms`,etc.)
+<br>
+
+Solutions: modèle *zero-inflated* (`glmmTMB`,`pscl`,`brms`, etc.)
+
 
 ## Extensions
 
-Gamma:
-
-Beta:
-
-Tweedie:
+<br>
 
 
+**Gamma** &nbsp;&nbsp; $]0,\infty$
 
-## Vérification des suppositions
+Variable réponse continue, strictement positive et avec une asymétrie à droite.
 
-### Simuler à partir d'un modèle
+Souvent une alternative à une transformation $log$.
 
-### Le package DHARMa
+Ex.: concentration d'un composé, biomasse, etc.
 
-## GAM
+<br>
 
-A generalized additive model has the same component as a GLM, but the linear predictor is made of non-linear functions (*smooths*) of the explanatory variables.
+
+**Tweedie** &nbsp;&nbsp; $[0,\infty$
+
+Variable réponse continue positive et incluant des 0.
+
+Ex.: biomasse capturée, précipitations, etc.
+
+Voir [Lecomte et al. 2013](https://doi.org/10.1111/2041-210X.12122)
+
+<br>
+
+
+**Beta** &nbsp;&nbsp; $]0,1[$ &nbsp; ou &nbsp; $[0,1]$
+
+Variable continue entre 0 et 1 exclusivement.
+
+Pour proportion ou % ne provenant pas d'un ratio entre entiers.
+
+Si 0 et 1 possibles, certaines transformations peuvent être utilisées.
+
+Ex.: proportion d'une surface affectée, proportion de temps passé en alimentation, etc.
+
+Voir [Douma & Weedon 2019](https://doi.org/10.1111/2041-210X.13234)
+
+
+
+## Modèles généraux additifs (GAM)
+
+Les GAMs (*Generalized Additive Models*) sont utiles lorsque la relation entre les variables explicatives et la variable réponse est non-linéaire ou complexe et qu'elle ne peut pas être décrite à l'aide d'un modèle théorique.
+
+Des exemples? 
+
+Pour décrire le lien entre une variable $x$ et la variable réponse, des fonctions de lissage sont utilisées (*smooth functions*)
+
+
+
+### Exemple
+
+Encore une fois, simulons des données fictives en créant une relation complexe entre $x$ et $y$.
+
+```{r}
+
+set.seed(123) 
+n<-200 
+x<-sort(runif(n,0,10)) 
+
+f<-function(i){ # fonction complexe reliant x et y
+  cos(i)+exp(0.2*i)
+}
+
+y<-f(x)+rnorm(length(x),0,0.5) # on ajoute un peu de variation autour de cette fonction
+d<-data.frame(x,y) 
+
+plot(y~x,data=d,xlab="x",ylab="y",col="grey60")
+v<-seq(min(d$x),max(d$x),by=0.1)
+lines(v,f(v),col="grey60",lwd=2) 
+
+```
+
+
+#### Un modèle linéaire?
+
+
+```{r}
+
+plot(y~x,data=d,xlab="x",ylab="y",col="grey60")
+lines(v,f(v),col="grey60",lwd=2) ## generating function (TRUE function)
+m<-lm(y~x,data=d)
+p<-predict(m,data.frame(x=v))
+lines(v,p,lwd=1)
+
+```
+
+#### Vérifions les suppositions
+
+```{r}
+par(mfrow=c(2,2))
+plot(m)
+
+```
+
+#### Un modèle polynomial?
+
+```{r}
+
+plot(y~x,data=d,xlab="x",ylab="y",col="grey60")
+lines(v,f(v),col="grey60",lwd=2) ## generating function (TRUE function)
+
+m2<-lm(y~poly(x,2),data=d)
+p<-predict(m2,data.frame(x=v))
+lines(v,p,col=2)
+
+m3<-lm(y~poly(x,3),data=d)
+p<-predict(m3,data.frame(x=v))
+lines(v,p,col=3)
+
+m4<-lm(y~poly(x,4),data=d)
+p<-predict(m4,data.frame(x=v))
+lines(v,p,col=4)
+
+legend("topleft",lwd=1,cex=2,col=2:4,legend=c(expression(x^2),expression(x^3),expression(x^4)),bty="n")
+
+```
+
+#### Un GAM!
+
+Maintenant, utilisons plutôt un GAM avec la fonction `gam` du package [mgcv](https://CRAN.R-project.org/package=mgcv).
+
+```{r}
+
+library(mgcv)
+
+plot(y~x,data=d,xlab="x",ylab="y",col="grey60")
+lines(v,f(v),lwd=2)
+
+g<-gam(y~s(x),data=d) # le s veut dire smooth de x
+
+p<-predict(g,data.frame(x=v))
+lines(v,p,col="red")
+
+```
+
+
+
+### Comment ça marche?
+
+**Generalized additive models**
+
+
+On a un prédicteur linéaire fait de fonctions non-linéaires (*smooths*) des variables explicatives.
 
 $$y \sim \mathcal{ExpFam}(\mu,...)$$
 
@@ -1240,11 +1433,175 @@ $$\mathcal{g}(\mu)=\beta_0 + \mathcal{f_1} (X_1) + \mathcal{f_2} (X_2) + ... + \
 
 There are many ways to construct these functions. Each smooth function $\mathcal{f}$ has a basis of a given dimension $\mathcal{q}$ and for a given $X$ can be written as:
 
+Il y a plusieurs façons de construire ces fonctions. Chaque fonction $\mathcal{f}$ a une base d'une dimension donnée $\mathcal{q}$ pour une variable $X$.
+
 $$\mathcal{f} (X)=\sum_{i=1}^{\mathcal{q}} \mathcal{b_i}(X)\beta_i$$
 
-where the $\beta_i$ are arbitrary functions. Thus, a GAM is a linear combination of smooth terms. An example for a basis could be a simple cubic polynomial.
+où les $\beta_i$ sont des fonctions arbitraires. Ainsi, un GAM est une combinaison linéaire de termes de lissage. Un exemple de base pourrait être par exemple un polynome de degré 3.
 
 $$\mathcal{f} (X)=\beta_1 + \beta_2 X + \beta_3 X^2 + \beta_4 X^3$$
+
+<hr>
+
+#### GAM construction
+
+To have a slightly better understanding of what a GAM may represent, let's decompose the data we studied in the example into sections and fit cubic polynomial to each.
+
+```{r}
+
+plot(y~x,data=d,xlab="x",ylab="y",col="grey60")
+knots<-seq(min(d$x),max(d$x),length.out=4)
+b<-cut(d$x,breaks=knots)
+abline(v=knots,lty=2,col="grey60")
+
+d$b<-b
+
+l<-split(d,d$b)
+
+invisible(lapply(l,function(i){
+  m<-lm(y~poly(x,3),data=i)  
+  v<-seq(min(i$x),max(i$x),by=0.1)
+  p<-predict(m,data.frame(x=v))
+  lines(v,p)
+}))
+
+```
+
+<hr>
+
+We now have different pieces fitted to each section. But the pieces need to be smoothly connected together to form [splines](https://en.wikipedia.org/wiki/Spline_(mathematics)) which are piecewise polynomial curves. Without entering into details, these pieces are connected using constraints on first- and second-order derivatives to ensure smooth connections. These connections are made at **knots**. There are several ways to determine the number of knots and it may also depend on the type of splines used.
+
+Now, let's go back to back to our gam model.
+```{r}
+# extract the bases
+mm <- predict(g, type = "lpmatrix")
+
+# plot them
+matplot(d$x,mm[,-1],type="l",ylab="Basis functions")
+
+# add a legend
+nn <- ncol(mm[,-1])
+legend("top",horiz=TRUE,colnames(mm[,-1]),cex=0.8,col=seq_len(nn),lty=seq_len(nn),inset=c(0,-0.1),xpd=TRUE,bty="n")
+```
+
+<hr>
+
+```{r}
+plot(y~x,data=d)
+lines(d$x,mm%*%g$coefficients) # combine the linear predictor
+```
+
+
+<!-- One might ask, why use piecewise polynomial instead of a high degree polynomial fitted to the whole data? High degree polynomials can lead to unwanted oscillations, notably at the edges of predictions. For example, see [Runge's phenomenon](https://en.wikipedia.org/wiki/Runge%27s_phenomenon).   -->
+
+#### Ça sert à quoi?
+
+
+
+#### `mgcv`
+
+Le package `mgcv` est très bien documenté et son fichier d'aide contient beaucoup d'information.
+
+`?mgcv` information générale sur le package
+
+`?gam` information générale sur la fonction `gam`
+
+`?gam.models`  comment spécifier un modèle avec `gam`
+
+`?gam.selection`  comment faire de la sélection de modèle
+ 
+`?mgcv.FAQ`  questions fréquemment posées
+
+<hr>
+
+GCV stands for **G**eneralized **C**ross-**V**alidation. This is one of the procedure that determines the optimal amount of smoothing and it is done automatically by the mgcv algorithms. 
+
+Generally speaking, cross-validation is a model validation technique for assessing how well a model will perform on an independent dataset. For example, this can be done by running a model on a random partition of the data (say 90%, the training data) and then predict the rest of the data (10%, the validation data) and calcute the prediction errors. There are several different ways of doing this. Another is to run the model by removing a single observation at a time and then try to predict that observation with the model (*leave-one-out cross-validation*). Intuitively, GCV is similar, but it is done in a more computationally efficient way.
+
+Thus, one important advantage of using gam and mgcv is that the optimal level of smoothness is automatically determined. Beware that the level of smoothness determined by this method may not be appropriate when the is collinearity, non-independence or for small sample sizes.
+
+Other methods than GCV are now available. Type `?gam.selection` for more detailed information on the different methods possible.
+
+<hr>
+
+### The `gam` function
+
+Standard non-smoothed variables can go in the `gam` formula. In this case, the ouput returned is similar to the `lm` output.
+```{r}
+g<-gam(y~x,data=d)
+summary(g)
+```
+
+<hr>
+
+What does the summary output looks like with a smooth term?
+```{r}
+g<-gam(y~s(x),data=d)
+summary(g)
+```
+
+1. The first part deals with parametric coefficients (factors, non-smoothed variables)
+
+2. The second part deals with smoothed terms and report the **edf** which stands for **e**stimated **d**egrees of **f**reedom. 
+
+Without going into details, it roughly represents the level of smooth complexity required for modeling the response.
+
+3. The third part reports $R^2$-type measures and the generalized cross validation value.
+
+<hr>
+
+Several methods (functions) are available to deal with gam objects: 
+
+- `print` 
+- `summary`
+- `anova` 
+- `plot` 
+- `predict`
+- `residuals` 
+
+<hr>
+
+### Smooths
+
+<br>
+
+`s()`
+
+`gam(y~s(x),data=d)`
+
+Used for univariate smooths, isotropic smooths of several numeric variables (with variables on the same scale, e.g., XY coordinates), interactions, simple random effects.
+
+<br>
+
+`te()`
+
+`gam(y~te(x,z),data=d)`
+
+Tensor product smooths of several variables (interactions) e.g. 
+
+<br>
+
+`ti()`
+
+`gam(y~ti(x)+ti(z)+ti(x,z),data=d)`
+
+Tensor product smooths with marginal smooths excluded (and lower order interaction terms)
+
+<br><br>
+
+The list of available smooth terms is given in `?smooth.terms`
+
+
+### Set up a model
+
+All families available in GLMs are also available in GAMs and others are also available.
+
+`?family.mgcv`
+
+
+
+
+
 
 <!--
 
@@ -1255,4 +1612,14 @@ $$\mathcal{f} (X)=\beta_1 + \beta_2 X + \beta_3 X^2 + \beta_4 X^3$$
 
 -->
 
+# Liens utiles
 
+[A protocol for data exploration to avoid common statistical problems](https://doi.org/10.1111/j.2041-210X.2009.00001.x)
+
+[A protocol for conducting and presenting results of regression-type analyses](https://doi.org/10.1111/2041-210X.12577)
+
+[Applied statistics in ecology: common pitfalls and simple solutions](https://doi.org/10.1890/ES13-00160.1)
+
+[Simple means to improve the interpretability of regression coefficients](https://doi.org/10.1111/j.2041-210X.2010.00012.x)
+
+<!-- to do, modèle linéaire, simul t.test, simule CI, check début, each verif assump plot, à compléter, revise all, list Zuur papers, read Marc again -->
