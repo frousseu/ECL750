@@ -88,7 +88,7 @@ h1.title {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  padding-top: 800px;
+  padding-top: 80px;
   padding-bottom: 50px;
   color: DarkGreen;
   font-weight: bold;
@@ -128,6 +128,8 @@ options(width=150)
 ```
 
 <br>
+
+<!--
 
 # 1. Stats de base et modèles linéaires
 
@@ -389,9 +391,9 @@ hist(tvalue,breaks=50)
 
 ```
 
-#### À compléter !!!!
-
 -->
+
+<!--
 
 ## Modèles linéaires simples
 
@@ -441,6 +443,8 @@ Quelles sont les suppositions de bases d'un modèle linéaire tel que celui pré
 * Indépendence entre les observations?
 
 <!-- peut-êwtre compléter avec une slide sur chaque et des solutions -->
+
+<!--
 
 ### Simulations
 
@@ -615,6 +619,7 @@ summary(m)
 
 <!-- Les facteurs sont comparés par rapport au niveau de référence! -->
 
+<!--
 
 ## Comprendre son modèle avec des graphiques
 
@@ -731,10 +736,6 @@ plot(g,add.data=TRUE,jitter=FALSE)
 <br>
 
 * Erreur de type II: ne pas rejeter l'hypothèse nulle, alors qu'elle est fausse (faux négatif). 
-
-<!-- -->
-
-<!-- -->
 
 
 ### Simulations 
@@ -1539,6 +1540,8 @@ lines(d$x,mm%*%m$coefficients)
 
 <!-- One might ask, why use piecewise polynomial instead of a high degree polynomial fitted to the whole data? High degree polynomials can lead to unwanted oscillations, notably at the edges of predictions. For example, see [Runge's phenomenon](https://en.wikipedia.org/wiki/Runge%27s_phenomenon).   -->
 
+<!--
+
 #### Pourquoi ?
 
 Pourquoi utiliser les GAMs vs. la régression polynomiale?
@@ -1563,6 +1566,327 @@ Le package `mgcv` est très bien documenté et son fichier d'aide contient beauc
 `?gam.selection`  comment faire de la sélection de modèle
  
 `?mgcv.FAQ`  questions fréquemment posées
+
+-->
+
+# 3. Vraisemblance, sélection de modèles et régularisation
+
+## But d'une analyse
+
+<br>
+
+- Tester des hypothèses
+
+- Faire des prédictions
+
+- Faire de l'exploration
+
+<br>
+
+Les méthodes d'analyses statistiques utilisées et la façon de rapporter les résultats devraient être influencés par le but de l'analyse.
+
+### Tester des hypothèses
+
+<br>
+
+Ici, on a généralement des hypothèses a *priori* que l'on veut tester avec des données.
+
+
+### Tester des hypothèses
+
+<br>
+
+Ici, on a généralement des hypothèses a *priori* que l'on veut tester avec des données. L'inférence est la priorité. 
+
+
+### Faire des prédictions
+
+<br>
+
+Ici, le but est surtout de prédire et de trouver les meilleurs modèles / variables maximisant la capacité prédictive. La capacité prédictive est la priorité.
+
+
+
+### Faire de l'exploration
+
+<br>
+
+Ici, le but est surtout de découvrir des relations dans un contexte ou les connaissances théoriques ne sont pas assez développées pour générer des hypothèses claires. La découverte de relations servira à proposer de nouvelles hypothèses ou de nouveaux mécanismes à explorer.
+
+
+
+
+
+## Compromis biais vs. variance
+
+<br>
+
+En omettant des variables d'un modèle, on risque de biaiser l'estimation des effets des variables incluses.
+
+En inlcuant trop de variable dans un modèle, on augmente l'incertitude dans nos estimations.
+
+<br>
+
+Il y a donc toujours un compromis entre estimer nos paramètres avec précision et sans biais.
+
+
+
+## Surparamétrisation / sousparamétrisation
+
+On parle souvent d'*Overfitting* ou d'*underfitting*.
+
+Un modèle surparamétrisé est un modèle qui "colle" trop bien aux données. Soit que le modèle a trop de paramètres, soit le modèle est trop flexible et s'adapte trop bien au jeu de données en question. 
+
+Le danger est qu'en apprenant un jeu de données trop bien, le modèle risque de capturer les caractéristiques d'un jeu de données en particulier ce qui fera en sorte que le modèle sera difficilement généralisable à d'autres situations (e.g. faire de bonnes prédictions avec d'autres données).
+
+
+## Parsimonie
+
+Le principe de parsimonie guide la majeure partie de la science. ce principe veut que les explications simples sont généralement préférables aux explications complexes (ou compliquées ?).
+
+En statistiques, un modèle parsimonieux est un modèle qui explique beacoup avec peu de paramètres.
+
+
+
+## Vraisemblance
+
+## Sélection de modèles
+
+### R2
+
+Simulons une régression linéaire simple
+
+```{r}
+#############################################
+#Rappel du R^2 (coefficient de determination).
+
+set.seed(12345)
+
+n<-100
+x1<-runif(n,0,10)
+y<-rnorm(n, mean=10+2*x1, sd=5)
+d<-data.frame(y,x1)
+m <- lm(y~x1,data=d)
+summary(m)
+
+plot(x1,y)
+abline(m)
+
+```
+
+Calculons un R2 à partir de cette régression. Il y a plusieurs façons de calculer le R2.
+
+```{r}
+
+plot(y,fitted(m))
+cor(y,fitted(m))^2
+
+#Analyse de la variance.
+a<-anova(m)
+a
+names(a)
+a[1,2]/(a[1,2]+a[2,2])
+
+```
+
+Que se passe-t-il si on ajoute des variables n'ayant aucun effet sur *y* dans le modèle?
+
+```{r}
+#Selectionner un modèle sur la base du R^2. Favorise le surparametrage des modèles et la découverte d'effets fortuits.
+#Exemple1
+
+x<-lapply(2:10,function(i){
+  runif(n,0,10)  
+})
+x<-do.call("data.frame",x)
+names(x)<-paste0("x",2:10)
+d<-cbind(d,x)
+
+
+r2<-lapply(2:10,function(i){
+  f<-as.formula(paste("y~",paste(names(d)[2:i],collapse="+")))
+  m2<-lm(f,d)
+  summary(m2)["r.squared"]
+  as.data.frame(summary(m2)[c("r.squared","adj.r.squared")])
+})
+r2<-do.call("rbind",r2)
+
+matplot(r2,type="b",xlab="Nb de paramètres",ylab="R2",col=1:2,lwd=2,pch=1,cex=2,lty=1)
+legend("topleft",inset=c(0.05,0.025),col=1:2,lwd=2,legend=c("R2","R2 ajusté"),bty="n",cex=1.5,pch=21,pt.bg="white",pt.cex=2)
+
+```
+
+Que se passe-t-il si on ajoute presque autant de variable explicative que d'observations?
+
+```{r}
+m<-lm(y~x1+x2+x3+x4+x5+x6+x7+x8,data=d[1:10,])
+summary(m)
+```
+
+Si on en ajoute une de plus?
+
+```{r}
+m<-lm(y~x1+x2+x3+x4+x5+x6+x7+x8+x9,data=d[1:10,])
+summary(m)
+
+```
+
+
+Ici, notre modèle épouse parfaitement les données. Les valeurs prédites sont mêmes égales aux observations.
+
+```{r}
+
+plot(d$y[1:10],predict(m))
+
+```
+
+
+
+
+
+On voit que le R carré augmente à chaque ajout de variable.
+
+### Méthodes *stepwise*
+
+### Tests de ratio de vraisemblance
+
+LRT (*Likelihood Ratio Test*)
+
+### Critère d'information
+
+#### AIC
+
+Le critère d'information d'Akaike (*Akaike Information Criterion*) se calcule de la façon suivante. 
+
+<br>
+
+$$AIC = -2\textrm{log}(\hat{L}) + 2p$$
+
+Où $\hat{L}$ est le maximum de vraisemblance et $p$ le nombre de paramètres dans le modèle.
+
+<br>
+
+Il faut voir $2p$ comme étant un terme qui pénalise la valeur d'$AIC$ pour chaque paramètre ajouté au modèle.
+
+
+##### AICc
+
+$$AICc = AIC + \frac{2p(p+1)}{n-p-1}$$
+
+<br>
+
+Cette version est le $AIC$ corrigé pour les petites tailles d'échantillon.
+
+
+#### BIC
+
+$$BIC = -2\textrm{log}(\hat{L}) + p\textrm{log}(n)$$
+
+## Validation croisée
+
+Le principe derrière la validation croisée est d'entraîner un modèle sur une partie des données et de tenter de prédire les valeurs des données qui n'ont pas servi à entrainer le modèle.
+
+Ceci permet de quantifier l'erreur de prédiction avec des mesures comme le *root mean square error* (*RMSE*). Ici, on peut par exemple chercher le modèle minimisant cette erreur.
+
+<br>
+
+$$RMSE = \sqrt{\sum_{i=1}^{n} \frac{(\hat{y_{i}}-y_{i})^2}{n}}$$
+
+<br>
+
+Ici, on cherche à minimiser l'écart entre les prédictions et les observations
+
+### Plusieurs variantes
+
+<br>
+
+*Leave-one-out Cross-Validation*
+
+Ici, on entraîne le modèle sur toutes les observations sauf une et on tente de prédire cette obsrvation mise de côté. On répète ce processus pour toutes les observations. 
+
+<br>
+
+*K-fold Cross-Validation*
+
+Ici, on divise le jeu de données en k parties qu'on laisse de coté et on entraîne le modèle suer le reste des données. On répète le processus pour chacune des k parties.
+
+
+## Validation avec des données externes
+
+<br>
+
+On parle parfois de *Out-of-sample prediction*. 
+
+Ici, on valide le pouvoir prédictif de notre modèle à l'aide d'un jeu de données externes à ce qui a été utilisé pour estimer les modèles. C'est la méthode la plus robuste, mais en pratique, ce n'est pas toujours possible.
+
+Exemples?
+
+
+
+## Régularisation
+
+La régularisation est un terme général qui désigne l'ensemble des méthodes qui cherche à éviter la surparamétrisation. Ici, l'idée est de faire en sorte que les modèles identifient les structures "régulières" dans les données et non les structures "irrégulières".
+
+
+On parle aussi souvent de pénalisation. L'idée est de pénaliser les modèles (i.e. les paramètres) pour éviter leur trop grande complexité.
+
+
+### Rappel régression
+
+On cherche à minimser la somme des carrés résiduelles (RSS, *residual sum of squares*).
+
+<br>
+
+$$RSS = \sum_{i=1}^{n} \left(y_{i}-\sum_{j=1}^{p}\beta_{j}x_{ij}\right)^2$$
+
+<br>
+
+En d'autres mots, on cherche à minimser l'écart entre les prédictions et les observations.
+
+
+#### Ridge regression
+
+Avec la *ridge regression*, on ajoute une pénalité constituée de la somme des paramètres au carré et d'un paramèytre $\lambda$ servant à faire l'ajustement. Le paramètre $\lambda$ est ajusté par validation croisé afin d'identifier la valeur optimale permettant le meilleur pouvoir prédictif.
+
+$$Ridge = RSS + \lambda\sum_{j=1}^{p}\beta_{j}^2$$
+
+Toutes les variables seront retenues dans ce modèle, mais les coefficients seront pénalisés vers 0 ce qui aura pour effet de réduire considérablement la contribution de certaines variables.
+
+#### LASSO
+
+Le LASSO (*Least Absolute Shrinkage and Selection Operator*) ressemble beaucoup à la *ridge regression*, mais cette fois la pénalité est construire avec la somme en valeur absolue des paramètres. 
+
+$$LASSO = RSS + \lambda\sum_{j=1}^{p}\lvert\beta_{j}\rvert$$
+
+Avec le LASSO, seules les variables les plus importantes seront retenues et les autres seront réduites à zéro. Ceci a l'avantage de procéder à une sélection automatique des variables.
+
+#### Régression régularisée
+
+La méthode *Elasticnet* est une sorte de compromis entre le LASSO et la *ridge regression*. Toutes ces méthodes sont accessibles via le package [glmnet]().
+
+<br>
+
+Beaucoup utilisé en apprentissage machine (*machine learning*) étant donné que le but est très souvent la prédiction.
+
+<br>
+
+Le principal désavantage de ces méthodes est qu'il n'est pas clair pour l'instant comment devrait être estimé l'incertitude autour des paramètres ce qui en fait des outils moins utiles pour l'inférence.
+
+
+
+## Conclusion
+
+<br>
+
+*No Free Lunch Theorem*
+
+<br>
+
+Il n'y a pas une méthode qui performe mieux que les autres dans toutes les situations.
+
+<br>
+
+Malgré ce qu'on pourrait penser, la sélection de modèles (ou l'identification de variables importantes) est toujours une question ouverte en constante évolution. Il faut se méfier des traditions et de leur inertie...
 
 <!--
 
@@ -1644,12 +1968,7 @@ All families available in GLMs are also available in GAMs and others are also av
 
 -->
 
-
-
 <!--
-
-# 3. Vraisemblance, sélection de modèles et régularisation
-
 
 # 4. Introduction aux statistiques bayésiennes
 
