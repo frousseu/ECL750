@@ -88,8 +88,8 @@ h1.title {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  padding-top: 800px;
-  padding-bottom: 100px;
+  padding-top: 80px;
+  padding-bottom: 50px;
   color: DarkGreen;
   font-weight: bold;
 }
@@ -129,7 +129,6 @@ options(width=150)
 
 <br>
 
-<!--
 
 # 1. Stats de base et modèles linéaires
 
@@ -339,7 +338,6 @@ On entend souvent à tort que cela veut dire qu'il y a 95% de chances que le par
 
 Tout comme l'erreur-type, l'intervalle de confiance est une mesure de précision dans l'estimation d'un paramètre.
 
-<!--
 
 ## Valeur de p
 
@@ -391,9 +389,6 @@ hist(tvalue,breaks=50)
 
 ```
 
--->
-
-<!--
 
 ## Modèles linéaires simples
 
@@ -443,8 +438,6 @@ Quelles sont les suppositions de bases d'un modèle linéaire tel que celui pré
 * Indépendence entre les observations?
 
 <!-- peut-êwtre compléter avec une slide sur chaque et des solutions -->
-
-<!--
 
 ### Simulations
 
@@ -618,8 +611,6 @@ summary(m)
 ```
 
 <!-- Les facteurs sont comparés par rapport au niveau de référence! -->
-
-<!--
 
 ## Comprendre son modèle avec des graphiques
 
@@ -1540,7 +1531,6 @@ lines(d$x,mm%*%m$coefficients)
 
 <!-- One might ask, why use piecewise polynomial instead of a high degree polynomial fitted to the whole data? High degree polynomials can lead to unwanted oscillations, notably at the edges of predictions. For example, see [Runge's phenomenon](https://en.wikipedia.org/wiki/Runge%27s_phenomenon).   -->
 
-<!--
 
 #### Pourquoi ?
 
@@ -1567,7 +1557,6 @@ Le package `mgcv` est très bien documenté et son fichier d'aide contient beauc
  
 `?mgcv.FAQ`  questions fréquemment posées
 
--->
 
 # 3. Sélection de modèles
 
@@ -1899,7 +1888,7 @@ $$RMSE = \sqrt{\sum_{i=1}^{n} \frac{(\hat{y_{i}}-y_{i})^2}{n}}$$
 Ici, on cherche à minimiser l'écart entre les prédictions et les observations
 
 
-### Plusieurs variantes
+#### Plusieurs variantes
 
 <br>
 
@@ -1933,7 +1922,7 @@ La régularisation est un terme général qui désigne l'ensemble des méthodes 
 On parle aussi souvent de pénalisation. L'idée est de pénaliser les modèles (i.e. les paramètres) pour éviter leur trop grande complexité.
 
 
-### Rappel régression
+#### Rappel régression
 
 On cherche à minimser la somme des carrés résiduelles (RSS, *residual sum of squares*).
 
@@ -1989,7 +1978,7 @@ Le principal désavantage de ces méthodes est qu'il n'est pas clair pour l'inst
 
 <br>
 
-*No Free Lunch Theorem*
+*No Free Lunch Theorem !*
 
 <br>
 
@@ -1998,6 +1987,10 @@ Il n'y a pas une méthode qui performe mieux que les autres dans toutes les situ
 <br>
 
 Malgré ce qu'on pourrait penser, la sélection de modèles (ou l'identification de variables importantes) est toujours une question ouverte en constante évolution. Il faut se méfier des traditions et de leur inertie...
+
+<br>
+
+Voir notamment cette conférence très intéressante par Mark Brewer concernant le culte de l'AIC: [Model selection and the cult of AIC](https://youtu.be/lEDpZmq5rBw)
 
 <!--
 
@@ -2081,9 +2074,226 @@ All families available in GLMs are also available in GAMs and others are also av
 
 <!--
 
+-->
+
 # 4. Introduction aux statistiques bayésiennes
 
--->
+## Probabilités
+
+## Vision fréquentiste
+
+## Vraisemblance
+
+## Approche bayésienne
+
+### Théorème de Bayes
+
+Il s'agit simplement d'une règle en théorie des probabilités qui permet de relier des probabilités conditionnelles.
+
+$$P(A|B) = \frac{P(B|A)P(A)}{P(B)}$$
+<br><br>
+
+$P(A)$ veut dire la probbailité de $A$, indépendemment de $B$.
+<br><br>
+$P(A|B)$ veut dire la probabilité de $A$ sachant $B$. C'est une probabilité conditionelle.
+
+### Interprétation
+
+Un exemple classique de cette règle est le suivant. Supposons que $P(A)$ désigne la probabilité d'être infecté par la Covid-19 et que $P(B)$ désigne la probabilité de tester positif à un test de Covid-19. Ici, on a aussi $P(A')$ qui est la probabilité de ne pas être infecté.
+<br><br>
+Si on a:
+<br>
+$P(A) = 1/500 = 0.002$: proportion de personnes infectées
+
+$P(A') = 1-1/500 = 0.998$: proportion de personnes qui ne sont pas infectées
+
+$P(B|A) = 0.98$: probabilité d'un test positif si une personne est infectée
+
+$P(B|A') = 0.95$: probabilité d'un test négatif si une personne n'est pas infectée
+
+$P(B) = P(B|A)P(A) + P(B|A')P(A')$: il faut additionner les possibilités associées au cas où une personne est infectée et au cas où une personne n'est pas infectée. 
+
+<br>
+
+Quelle est la probabilité d'être infecté si on reçoit un test positif (en assumant qu'on se fait tester pour une raison autre que d'avoir des symptômes) ?
+<br>
+
+$$P(A|B) = \frac{P(B|A)P(A)}{P(B|A)P(A)+P(B|A')P(A')} = \frac{0.98 \times 0.002}{0.98 x 0.002 \times (1-0.95) \times 0.998} \approx 0.0378$$
+
+<br>
+Dans ce cas, la probabilité d'avoir réellement la Covid-19 si le test est positif n'est que d'environ 3.8 %
+
+
+### Appliqué aux statisiques
+
+Les statisiques bayésiennes se basent sur cette règle pour faire une **inteprétation probabiliste des paramètres** à partir des données.
+
+$$P(\theta|data) = \frac{P(data|\theta)P(\theta)}{P(data)}$$
+<br><br>
+$data$: données
+<br>
+$\theta$: paramètres du modèle
+<br><br>
+$P(\theta|data)$: distribution postérieure (*posterior*)
+<br>
+$P(data|\theta)$: vraisemblance (*likelihood*)
+<br>
+$P(\theta)$: distribution *a priori* (*prior*) 
+<br>
+$P(data)$: distribution marginale des données (*marginal likelihood*)
+
+
+## Posteriors
+
+$$P(\theta|data) = \frac{P(data|\theta)P(\theta)}{P(data)}$$
+<br><br>
+La distribution postérieure $P(\theta|data)$ est ce que l'on cherche à estimer. Il s'agit d'une distribiution de probabilité qui décrit les probabilités d'observer les différentes valeurs possibles du paramètre.
+
+## Likelihood
+
+$$P(\theta|data) = \frac{P(data|\theta)P(\theta)}{P(data)}$$
+<br><br>
+Comme vu précédemment, la vraisemblance $P(data|\theta)$ représente la probabilité des données conditionnelles à des valeurs de paramètres $\theta$.
+
+## Priors
+
+$$P(\theta|data) = \frac{P(data|\theta)P(\theta)}{P(data)}$$
+<br><br>
+Les distributions *a priori* $P(data)$ représentent nos croyances sur les valeurs des paramètres avant de faire les analyses. On les représente à l'aide de distribution de probabilité. Ces croyances représentent ce à quoi on s'attend en termes de valeurs en se basant sur nos connaissances théoriques avant de faire notre expérience.
+
+[Prior Choice Recommendations](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations)
+
+## Marginal likelihood
+
+$$P(\theta|data) = \frac{P(data|\theta)P(\theta)}{P(data)} = \frac{P(data|\theta)P(\theta)}{\int P(data|\theta)P(\theta)d\theta}$$
+<br><br>
+Cette quantité $P(data$ est beaucoup plus difficile à comprendre intuitivement. Elle représente en quelque sorte la probabilité des données pour l'ensemble des valeurs de paramètres possibles (d'où l'intégrale). C'est la distribution marginale des données ou la vraisemblance marginale. Elle permet également de faire en sorte que la distribution postérieure soit une distribiution de probabilité (i.e. aire sous la courbe = 1). 
+<br><br>
+Il s'agit d'une constante qui est généralewment très difficile à calculer. Des méthodes comme le MCMC permettre d'éviter de la calculer et de tout de même obtenir la distirbution postérieure.  
+
+### En résumé
+
+$$Posterior = \frac{Likelihood \times Prior}{Marginal\;Likelihood}$$
+
+<br><br>
+
+Puisque le dénominateur est une constante et que dans bien des cas, on peut éviter de le calculer, on peut plus simplement écrire:
+
+<br><br>
+
+$$Posterior \propto Likelihood \times Prior$$
+
+En d'autres mots, la distribution postérieure est proportionnelle à la vraisemblance et aux distributions *a priori*
+<br><br>
+On pourrait aussi dire qu'avec une approche bayésienne, on met à jour nos croyances à l'aide de données.
+
+## Avantages
+
+- Interprétation probabiliste plus facile (e.g. intervalle de confiance fréquentiste vs. bayésien)
+
+- Facilite l'estimation de modèles complexes (e.g. modèle hiérarchique)
+
+- Intégration plus facile de l'incertitude à toutes les étapes du processus
+
+- Facilite l'estimation de quantité dérivées (e.g. prédictions ou combinaisons de prédictions)
+
+- Le fait d'avoir à spécifier des priors nous force à comprendre ce que nos paramètres représentent
+ 
+- Façon de penser plus naturelle, philosophiquement plus satisfaisant? 
+
+## Désavantages ?
+
+## Exemple
+
+Simulons d'abord un modèle avec des paramètres connus.
+
+```{r}
+n<-100
+x<-runif(n,0,10)
+y<-10*2*x+rnorm(n,0,10)
+d<-data.frame(y,x)
+```
+
+### Quels *priors* utilisés?
+
+Il est toujours préférable de visualiser les *priors* et de réfléchir à ce qu'ils représentent
+
+```{r,fig.height=3,fig.width=9}
+
+par(mfrow=c(1,3))
+curve(dnorm(x,0,50),from=-200,to=200,main="Beta normal(0,50)",ylab="Density")
+curve(dnorm(x,0,5),from=-20,to=20,main="Intercept normal(0,5)",ylab="Density")
+curve(dgamma(x,2,0.1),from=0,to=100,main="Écart-type gamma(2,0.1)",ylab="Density")
+
+```
+
+<br>
+Par exemple, pour la variance/écart-type du modèle, il faut idéalement un *prior* avec des valeurs strictement positive, car les valeurs négatives ne font pas de sens pour la variance. Une des possibilité est d'utiliser la distribution gamma.
+
+
+### Modèle avec brms
+
+```{r, message=FALSE}
+library(brms)
+
+m<-brm(y~x,
+       data=d,
+       cores=3,
+       chains=3,
+       family="gaussian",
+       prior=c(
+         set_prior("normal(0,50)", class = "b", coef="x"),
+         set_prior("normal(0,5)", class = "Intercept"),
+         set_prior("gamma(1,1)", class = "sigma")
+         )
+       )
+
+```
+
+
+### Sommaire
+
+```{r,fig.height=9,fig.width=6}
+summary(m)
+```
+
+### Visualisation des paramètres
+
+```{r,fig.height=8,fig.width=9}
+plot(m)
+```
+
+Avec les modèles bayésiens, il faut toujours vérifier la convergence des chaînes.
+
+
+### Incertitude
+
+### Modèles compexes et hiérarchiques
+
+### Interprétation
+
+## Algorithme
+
+### MCMC
+
+### HMC
+
+### Vérifier la convergence
+
+## Outils
+
+### WinBUGS
+
+### JAGS
+
+### Stan
+
+### brms
+
+### Autres
+
+INLA, Nimble, etc.
+
 
 # Liens utiles
 
