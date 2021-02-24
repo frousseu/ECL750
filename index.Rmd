@@ -2076,13 +2076,146 @@ All families available in GLMs are also available in GAMs and others are also av
 
 -->
 
-# 4. Introduction aux statistiques bayésiennes
+# 4. Vraisemblance et statistiques bayésiennes
 
-## Probabilités
+## Petit rappel des probabilités
+
+Quelle est la probabilité d'obtenir 2 fois pile en tirant une pièce de monnaie 2 fois?
+
+### Pile ou face
+
+On doit multiplier la probabilité de chaque événement pour obtneir la probabilité combinée de ces deux événements. Si $P(pile) = 0.5$ (*i.e.* la probabilité d'otenir pile), on a:
+
+<br>
+$$P(pile,pile) = P(pile) \times P(pile) = 0.5 \times 0.5 = 0.25$$
+<br>
+
+
+
+### Avec R
+
+On peut calculer ceci avec R et la fonction `dbinom`.
+
+```{r}
+dbinom(0,size=1,p=0.5) * dbinom(0,size=1,p=0.5)
+```
+
+<br>
+On peut également appliquer la fonction `dbinom` à un vecteur de valeur. Ceci nous donne un vecteur de (densité de) probabilité et on peut multiplier ces valeurs entre elles avec la fonction `prod`.
+
+```{r}
+prod(dbinom(c(0,0),size=1,p=0.5))
+```
 
 ## Vision fréquentiste
 
 ## Vraisemblance
+
+La vraisemblance (*likelihood*) représente la plausibilité de valeurs de paramètres en fonction de données observées. L'utlisation de la vraisemblance implique l'utilisation de distribution de probablités pour représenter le lien entre les observations et les modèles.
+<br><br>
+Pour quantifier la vraisemblance, on peut utiliser une fonction de vraisemblance (*likelihood function*).
+<br>
+$$L(\theta|data) = P(data|\theta)$$
+<br>
+$data$: données
+<br>
+$\theta$: paramètres du modèle
+<br><br>
+$L(\theta|data)$: fonction de vraisemblance
+<br>
+$P(data|\theta)$: vraisemblance (*likelihood*)
+
+<br>
+Ici, $L(\theta|data)$ est la fonction de vraisemblance et l'équation précédente nous dit que la vraisemblance des paramètres conditonnelle aux paramètres $\theta$ est égale à la (densité de) probabilité des données conditionelle aux paramètres $\theta$.
+
+
+
+### Maximum de vraisemblance
+
+L'idée derrière le maximum de vraisemblance (*maximum likelihood*) est de déterminer la valeur des paramètres qui rend l'observation des données la plus probable.
+
+
+<br><br>
+$data$: données
+<br>
+$\theta$: paramètres du modèle
+<br><br>
+$P(\theta|data)$: distribution postérieure (*posterior*)
+<br>
+$P(data|\theta)$: vraisemblance (*likelihood*)
+<br>
+$P(\theta)$: distribution *a priori* (*prior*) 
+<br>
+$P(data)$: distribution marginale des données (*marginal likelihood*)
+
+
+### Exemple
+
+Simulons `n = 20` des présences/absences avec une probabilité de `p = 0.5`. Ensuite, calculons la vraisemblance d'observer les données générées en fonction de plusieurs valeurs du paramètre p, qui ici est une probabilité.   
+
+```{r}
+set.seed(123)
+p<-0.5
+y<-rbinom(20,1,0.5)
+
+probs<-seq(0,1,by=0.01)
+l<-sapply(probs,function(i){
+  prod(dbinom(y,size=1,prob=i)) # likelihood
+})
+```
+
+Pour calculer la vraisemblance, on utilise la fonction dbinom qui permet de calculer pour chaque valeur observée une densité de probabilité. En calculant le produit `prod` de toutes ces valeurs, on obtient la valeur de la fonction de vraisemblance pour l'observation de l'ensemble de ces données pour une valeur donnée du paramètre `p`. On calcule ensuite ces valeurs de vraisemblance pour un ensemble de valeur de `p`.
+
+### Profile de vraisemblance
+
+On peut par la suite illustrer la vraisemblance d'obtenir les valeurs observées pour les différentes valeurs de `p`. Ceci permet d'illustrer le profile de vraisemblance (*likelihood profile*).
+
+```{r}
+plot(probs,l,type="l",ylab="Likelihood",xlab="Valeur du paramètre p")
+abline(v=sum(y)/length(y),lty=3)
+abline(v=0.5)
+legend("topleft",lty=c(1,3),legend=c("Probabilité réelle","Proportion de 1 dans l'échantillon"),bty="n")
+```
+
+<br>
+Le maximum de cette courbe est le maximum de vraisemblance (*maximum likelihood*), i.e. la valeur de `p` pour laquelle la probabilité d'observer les données est la plus grande. Dans ce cas précis, cette valeur est la proportion de 1 dans les données.
+
+
+#### Avec un glm
+
+Voici ce qu'on obtient avec un glm si on tente d'estimer cette probabilité. En principe, l'intercept représente cette probabilité, mais elle est sur l'échelle logit. Il faut donc retransformer le tout sous l'échelle d'une probabilité avec une fonction logit inverse.
+
+```{r}
+m<-glm(y~1,family=binomial)
+summary(m)
+exp(coef(m))/(1+exp(coef(m)))
+```
+
+
+
+#### Intervalle de confiance 
+
+On peut également estimer un intervalle de confiance autour de cette probabilité avec la fonction `confint.`
+
+```{r}
+ci<-confint(m) # calcul de l'intervalle de confiance sur les coefficients
+ci<-c(coef(m),ci) # intercept est l'estimation de la probabilité p
+c(exp(ci)/(1+exp(ci))) # intervalle de confiance
+
+```
+
+#### Log de la vraisemblance
+
+Pour des raisons pratiques, on va souvent maximiser le *log* de la vraisemblance (*log-likelihood*) pour éviter des problèmes numériques associés aux très petites valeurs. On parle donc souvent de *log-likelihood* (*LL*, *logLik*, etc.).
+
+Par exemple, on peut comparer la vraisemblance calculée par le glm à celle que nous avons calculée "à la mitaine" avec la fonction `dbinom` pour la valeur du paramètre qui maximise cette vraisemblance (`p = 0.55`).
+
+```{r}
+prod(dbinom(y,size=1,prob=0.55))
+exp(logLik(m))
+```
+
+
 
 ## Approche bayésienne
 
@@ -2124,10 +2257,10 @@ $$P(A|B) = \frac{P(B|A)P(A)}{P(B|A)P(A)+P(B|A')P(A')} = \frac{0.98 \times 0.002}
 Dans ce cas, la probabilité d'avoir réellement la Covid-19 si le test est positif n'est que d'environ 3.8 %
 
 
-### Appliqué aux statisiques
+### Appliqué aux statistiques
 
 Les statisiques bayésiennes se basent sur cette règle pour faire une **inteprétation probabiliste des paramètres** à partir des données.
-
+<br>
 $$P(\theta|data) = \frac{P(data|\theta)P(\theta)}{P(data)}$$
 <br><br>
 $data$: données
@@ -2161,7 +2294,6 @@ $$P(\theta|data) = \frac{P(data|\theta)P(\theta)}{P(data)}$$
 <br><br>
 Les distributions *a priori* $P(data)$ représentent nos croyances sur les valeurs des paramètres avant de faire les analyses. On les représente à l'aide de distribution de probabilité. Ces croyances représentent ce à quoi on s'attend en termes de valeurs en se basant sur nos connaissances théoriques avant de faire notre expérience.
 
-[Prior Choice Recommendations](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations)
 
 ## Marginal likelihood
 
@@ -2183,7 +2315,9 @@ Puisque le dénominateur est une constante et que dans bien des cas, on peut év
 
 $$Posterior \propto Likelihood \times Prior$$
 
+<br>
 En d'autres mots, la distribution postérieure est proportionnelle à la vraisemblance et aux distributions *a priori*
+
 <br><br>
 On pourrait aussi dire qu'avec une approche bayésienne, on met à jour nos croyances à l'aide de données.
 
@@ -2203,6 +2337,14 @@ On pourrait aussi dire qu'avec une approche bayésienne, on met à jour nos croy
 
 ## Désavantages ?
 
+- Souvent plus complexe (mais pas toujours)
+
+- Modèles plus longs à estimer
+
+- Moins de solutions *clés en main*?
+
+- Nécessité de choisir des *priors*
+
 ## Exemple
 
 Simulons d'abord un modèle avec des paramètres connus.
@@ -2214,7 +2356,7 @@ y<-10*2*x+rnorm(n,0,10)
 d<-data.frame(y,x)
 ```
 
-### Quels *priors* utilisés?
+### Quels *priors* utiliser?
 
 Il est toujours préférable de visualiser les *priors* et de réfléchir à ce qu'ils représentent
 
@@ -2233,22 +2375,35 @@ Par exemple, pour la variance/écart-type du modèle, il faut idéalement un *pr
 
 ### Modèle avec brms
 
-```{r, message=FALSE}
+```{r, message=FALSE,tidy=FALSE}
 library(brms)
 
-m<-brm(y~x,
-       data=d,
-       cores=3,
-       chains=3,
-       family="gaussian",
-       prior=c(
+m <- brm(y ~ x,
+       data = d,
+       cores = 3,
+       chains = 3,
+       family = "gaussian",
+       prior = c(
          set_prior("normal(0,50)", class = "b", coef="x"),
          set_prior("normal(0,5)", class = "Intercept"),
-         set_prior("gamma(1,1)", class = "sigma")
-         )
-       )
+         set_prior("gamma(2,0.1)", class = "sigma")
+       ),
+       file = "C:/Users/User/Downloads/brm_model"
+     )
 
 ```
+
+### Formulation du modèle
+
+On a la composante aléatoire, la composante systématique et les *priors*.
+
+<br>
+$$y \sim \mathcal{N}(\mu,\sigma^2)$$
+$$\mu = \beta_{0}+\beta_{1}x$$
+$$\beta_{0} \sim \mathcal{N}(0,50)$$
+$$\beta_{1} \sim \mathcal{N}(0,5)$$
+$$\sigma \sim \mathcal{Gamma}(2,0.1)$$
+
 
 
 ### Sommaire
@@ -2266,7 +2421,36 @@ plot(m)
 Avec les modèles bayésiens, il faut toujours vérifier la convergence des chaînes.
 
 
+### Types de priors
+
+- Informatif: basé sur la théorie, reflète les connaissances.
+
+- Non-informatif: reflète l'absence de connaissances ou le désir de ne pas influencer les résultats.
+
+- Plat (*flat*): similaire à non informatif.
+
+- Légèrement informatif (*weaky informative*): la théorie n'est pas assez développée pour utiliser des *priors* informatifs, mais assez pour savoir que certaines valeurs ne sont pas probables.
+
+- Par défaut: valeurs par défaut utilisées par les logiciels ou les packages.
+
+- Régularisant (regularizing): permet de circonscrire les valeurs obtenues et de pénaliser les valeurs élevées.
+
+- Etc.
+
+<br>
+
+Voir notamment [Lemoine 2019](https://doi.org/10.1111/oik.05985) et [Banner et al. 2020](https://doi.org/10.1111/2041-210X.13407) pour une discussion sur l'utilisation des priors en écologie.
+
+
+### Quels *priors* utilisés?
+
+Il faut aussi sélectionner une distribution approriée pour représenter nos *priors* et les distributiuons utilisées doivent êytre appropriées pour un paramètre donnée. Le groupe qui travaille sur la plateforme [STAN]() a plusieurs recommandations de *priors* à utiliser dépendemment du contexte (*priors* pour des pentes, *priors* pour des variances, *priors* pour des modèles hiérarchiques, etc.)
+
+Voir [Prior Choice Recommendations](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations).
+
 ### Incertitude
+
+
 
 ### Modèles compexes et hiérarchiques
 
