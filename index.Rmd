@@ -13,6 +13,8 @@ output:
     toc_float:
       collapsed: yes
       smooth_scroll: no
+editor_options: 
+  chunk_output_type: console
 ---
 
 <script>
@@ -32,11 +34,11 @@ output:
 pre.r {
     background-color: #EEEEEE;
     border-color: #DDDDDD;
-    font-size: 14pt;
+    font-size: 12pt;
 }
 
 pre code {
-  font-size: 11pt;
+  font-size: 12pt;
 }
 
 body {
@@ -48,9 +50,9 @@ body {
 }
 
 #TOC {
-  font-size: 12pt;
+  font-size: 8pt;
   border-color: white;
-  max-width: 600px;
+  max-width: 12vw;
 }
 
 .list-group-item.active:focus{
@@ -88,30 +90,12 @@ h1.title {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  padding-top: 0px;
+  margin-top: 100vh;
+  padding-top: 20px;
   padding-bottom: 50px;
   color: DarkGreen;
   font-weight: bold;
-}
-
-h1 {
-  font-size: 42px;
-}
-
-h2 {
-  font-size: 36px;
-}
-
-h3 {
-  font-size: 32px;
-}
-
-h4 {
-  font-size: 28px;
-}
-
-h5 {
-  font-size: 26px;
+  font-size: 25px;
 }
 
 .pres { /* write {.pres} next to each section to apply css  */
@@ -130,7 +114,7 @@ options(width=150)
 <br>
 
 
-# 1. Stats de base et modèles linéaires
+# 1. Stats de base, modèles linéaires, GLM
 
 
 ## Distribution statistique
@@ -186,7 +170,7 @@ polygon(c(v[v>=6 & v<=8],8,6), c(y[v>=6 & v<=8],0,0),col=alpha("red",0.5),border
 
 ```
 
-L'aire sous la courbe est de 1 et la proportion de cette surface en rouge représente la probabilité d'obtenir une valeur entre 6 et 8 avec une moyenne de $\mu = 5$ et un écart-type de $\sigma = 2$. On peut estimer cette probabilité avec la fonction `pnorm` intégrée à R. Ce type de fonction est intégré pour plusieurs distribution statistique (voir `?Distributions`).
+L'aire sous la courbe est de 1 et la proportion de la surface en rouge représente la probabilité d'obtenir une valeur entre 6 et 8 avec une moyenne de $\mu = 5$ et un écart-type de $\sigma = 2$. On peut estimer cette probabilité avec la fonction `pnorm` intégrée à R. Ce type de fonction est intégré pour plusieurs distribution statistique (voir `?Distributions`).
 
 
 ##### Probabilité d'obtenir une valeur? 
@@ -285,7 +269,7 @@ L'écart-type de ces moyennes correspond à l'erreur-type estimée à partir d'u
 
 <br>
 
-Le concept d'erreur-type s'applique aussi à d'autres paramètres estimés et pas seulement à la moyenne.  
+Le concept d'erreur-type s'applique aussi à d'autres paramètres estimés et non seulement à la moyenne.  
 
 <br>
 
@@ -346,8 +330,8 @@ Un exemple avec le test de $t$ et une population fictive.
 
 set.seed(1)
 n<-10000
-pop1<-rnorm(n,20,3) # population fictive de n indoividus avec une moyenne de 20
-pop2<-rnorm(n,21,3) # population fictive de n indoividus avec une moyenne de 21
+pop1<-rnorm(n,20,3) # population fictive de n individus avec une moyenne de 20
+pop2<-rnorm(n,21,3) # population fictive de n individus avec une moyenne de 21
 
 ech1<-sample(pop1,10) # échantillon de 10 individus de chaque population
 ech2<-sample(pop2,10)
@@ -367,6 +351,9 @@ v<-seq(-5,15,by=0.01)
 y<-dt(v,test$parameter)
 polygon(c(v[v<=test$statistic],test$statistic,min(v)), c(y[v<=test$statistic],0,0),col=alpha("red",0.5),border=NA)
 polygon(c(v[v>=abs(test$statistic)],max(v),abs(test$statistic)), c(y[v>=abs(test$statistic)],0,0),col=alpha("red",0.5),border=NA)
+abline(v=rep(test$statistic,2)*c(1,-1),lwd=2,lty=3,col="red")
+
+
 
 ```
 
@@ -378,14 +365,17 @@ Reprenons le test de $t$ précédent, mais cette fois, prenons nos échantillons
 
 nreps<-1000
 
-tvalue<-sapply(1:nreps,function(i){
+pvalue<-sapply(1:nreps,function(i){
   ech1<-sample(pop1,5) 
   ech2<-sample(pop1,5)
   test<-t.test(ech1,ech2)
-  test$statistic
+  test$p.value#statistic
 })
 
-hist(tvalue,breaks=50)
+hist(pvalue,breaks=50)
+abline(v=0.05,col="red",lwd=2,lty=3)
+sum(pvalue<=0.05)/length(pvalue)
+
 
 ```
 
@@ -450,7 +440,7 @@ Quelles sont les suppositions de bases d'un modèle linéaire tel que celui pré
 
 ```{r}
 # nb d'observations
-n<-200
+n<-75
 
 # valeurs fictives des variables explicatives selon une distribution uniforme
 x1<-runif(n,0,100)
@@ -501,6 +491,8 @@ La fonction `summary` est la plus utile pour extraire l'information d'un modèle
 ```{r}
 summary(m)
 ```
+
+<!--
 
 ##### Résidus
 
@@ -570,6 +562,7 @@ summary(m)
 
 `Residual standard error` représente la variance résiduelle ou la variance non-expliquée par le modèle. Remarquez que cette valeur n'est pas très différente de la valeur de 5 qui a été utilisée pour simuler le modèle.
 
+-->
 
 #### Vérification des suppositions de bases
 
@@ -654,11 +647,11 @@ visreg(m)
 
 Le package [ggeffects](https://strengejacke.github.io/ggeffects/index.html) permet également d'illustrer les prédictions d'un modèle, mais ce package se base sur l'utilisation du package [ggplot2](https://ggplot2.tidyverse.org/) pour construire les graphiques. Le principe demeure le même: en arrière-plan la fonction `predict` est utilisée. On peut également combiner les différents graphiques générés en utilisant le package [patchwork](https://patchwork.data-imaginist.com/index.html) et sa fonction `wrap_plots`.
 
-```{r,fig.width=8,fig.height=8}
+```{r,fig.width=8,fig.height=6,message=FALSE}
 library(ggeffects)
 library(patchwork)
 g<-ggpredict(m)
-p<-plot(g,add.data=TRUE,jitter=FALSE)
+p<-plot(g,add.data=TRUE)
 wrap_plots(p)
 
 ```
@@ -701,9 +694,9 @@ Une valeur de p significative c'est bien beau, mais ce qui importe vraiment c'es
 
 ##### Interactions avec `ggeffects`
 
-```{r}
+```{r,message=FALSE}
 
-g<-ggpredict(m,terms=c("x1","fac"))
+g<-ggpredict(m,terms=c("x1","fac"),message=FALSE)
 plot(g,add.data=TRUE,jitter=FALSE)
 
 ```
@@ -792,7 +785,7 @@ hist(unlist(p),breaks=seq(0,1,by=0.05),xlab="Valeurs de p")
 
 * Sous l'hypothèse nulle, les valeurs de p sont distribuées uniformément entre 0 et 1.
 
-
+<!--
 
 ## Extensions
 
@@ -814,8 +807,9 @@ Quelles sont les suppositions de bases qui sont susceptibles de ne pas être ren
 
 À voir au prochain cours!
 
+-->
 
-# 2. Modèles linéaires généralisés et extensions
+<!-- # 2. Modèles linéaires généralisés et extensions -->
 
 ## Modèles linéaires standards
 
@@ -830,6 +824,8 @@ $$y \sim \mathcal{N}(\beta\mathbf{X}, \mathbf{I}\sigma^2)$$
 
 <br>
 
+$\mathbf{X}$ est une matrice avec les valeurs des variables explicatives.
+
 $\mathbf{I}$ est une matrice identité qui a pour effet d'assigner une variance égale $\sigma^2$ à toutes les observations.
 
 
@@ -837,7 +833,7 @@ $\mathbf{I}$ est une matrice identité qui a pour effet d'assigner une variance 
 
 $$y \sim \mathcal{N}(\beta\mathbf{X}, \mathbf{\Sigma})$$
 
-$\mathbf{\Sigma}$ est une matrice de variance-covariance qui permet beaucoup plus de flexibilité en terme de variance et de dépendence entre les observations. En général, des paramètres seront associés à la matrice $\mathbf{\Sigma}$ pour permettre différentes situations. Dans le cas d'un modèle linéaire standard, on a $\mathbf{\Sigma} = \mathbf{I}\sigma^2$. 
+$\mathbf{\Sigma}$ est une matrice de variance-covariance qui permet beaucoup plus de flexibilité en terme de variance et de dépendance entre les observations. En général, des paramètres seront associés à la matrice $\mathbf{\Sigma}$ pour permettre différentes situations. Dans le cas d'un modèle linéaire standard, on a $\mathbf{\Sigma} = \mathbf{I}\sigma^2$. 
 
 <br>
 
@@ -894,7 +890,7 @@ La fonction de lien (*link function*) est une transformation qui permet de relie
 
 <br>
 
-C'est ce qui permet de relier les variables explicatives à la variable réponse. Pour chaque distribution qui pourrait être utilisée dans de cadre d'un GLM, une fonction de lien dite canonique est utilisée par défaut, mais il existe plusieurs fonctions de liens possibles.
+C'est ce qui permet de relier les variables explicatives à la variable réponse. Pour chaque distribution qui pourrait être utilisée dans le cadre d'un GLM, une fonction de lien dite canonique est utilisée par défaut, mais il existe plusieurs fonctions de liens possibles.
 
 
 
@@ -1025,7 +1021,7 @@ $$ log(5) =  1.609438 $$
 
 #### `ggeffects`
 
-```{r}
+```{r,message=FALSE}
 
 g<-ggpredict(m,terms=c("x [n=50]"))
 plot(g,add.data=TRUE,jitter=FALSE)
@@ -1123,7 +1119,7 @@ $$ logit(p) = log\left(\frac{p}{1-p}\right) = \eta = \beta_0 + \beta_1 x_1 + \be
 
 $$ y \sim \mathcal{Binom}(1,p) = \mathcal{Bernoulli}(p)$$
 
-La distribution de Bernoulli est un cas particulier de la distribiution binomiale avec un tirage (e.g. un individu est vivant ou mort, un individu est mâle ou femelle, etc.)
+La distribution de Bernoulli est un cas particulier de la distribution binomiale avec un tirage (e.g. un individu est vivant ou mort, un individu est mâle ou femelle, etc.)
 
 
 ### Distribution binomiale
@@ -1212,7 +1208,7 @@ $$ log\left(\frac{p}{1-p}\right) = log\left(\frac{0.5}{1-0.5}\right) = log(1) = 
 
 Avec `ggeffects`
 
-```{r}
+```{r,message=FALSE}
 
 g<-ggpredict(m,terms=c("x [n=50]"))
 plot(g,add.data=TRUE)
@@ -1266,7 +1262,7 @@ Binomiale -> Béta binomiale (`glmmTMB`, `brms`, etc.)
 
 Voici un exemple de GLM de Poisson avec de la surdispersion. Pour créer cette surdispersion, j'utilise une distribution négative binomiale pour générer les observations au lieu d'une distribution de Poisson. 
 
-```{r,fig.width=6,fig.height=5}
+```{r,fig.width=6,fig.height=5,message=FALSE}
 
 n<-100
 x<-runif(n,0,10)
@@ -1385,7 +1381,7 @@ Ex.: proportion d'une surface affectée, proportion de temps passé en alimentat
 
 Voir [Douma & Weedon 2019](https://doi.org/10.1111/2041-210X.13234)
 
-
+<!-- 
 
 ## Modèles généraux additifs (GAM)
 
@@ -1531,6 +1527,7 @@ lines(d$x,mm%*%m$coefficients)
 
 <!-- One might ask, why use piecewise polynomial instead of a high degree polynomial fitted to the whole data? High degree polynomials can lead to unwanted oscillations, notably at the edges of predictions. For example, see [Runge's phenomenon](https://en.wikipedia.org/wiki/Runge%27s_phenomenon).   -->
 
+<!--
 
 #### Pourquoi ?
 
@@ -1557,6 +1554,9 @@ Le package `mgcv` est très bien documenté et son fichier d'aide contient beauc
  
 `?mgcv.FAQ`  questions fréquemment posées
 
+-->
+
+<!--
 
 # 3. Sélection de modèles
 
@@ -2076,6 +2076,8 @@ All families available in GLMs are also available in GAMs and others are also av
 
 -->
 
+<!--
+
 # 4. Vraisemblance et statistiques bayésiennes
 
 ## Rappel des probabilités
@@ -2437,6 +2439,8 @@ plot(m)
 
 Les distributions postérieures des paramètres sont illustrées à gaude. À droite, les chaînes de MCMC sont illustrées (nous y reviendront). <!--Avec les modèles bayésiens, il faut toujours vérifier la convergence des chaînes.-->
 
+<!--
+
 ## MCMC
 
 Le MCMC (*Markov Chain Monte Carlo*) est une classe d'algorithmes permettant d'échantillonner à partir d'une distribution de probabilité. Il s'agit d'une approche qui permet d'éviter des calculs complexes, voire impossible, en utilisant une approche d'échantillonnage,
@@ -2549,7 +2553,7 @@ Il existe plusieurs outils pour faire des modèles bayésiens.
 <br><br>
 [**INLA**](https://www.r-inla.org/) Modèles spatiaux
 
-
+-->
 
 # Liens utiles
 
