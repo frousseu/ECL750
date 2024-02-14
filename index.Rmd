@@ -2555,6 +2555,337 @@ Il existe plusieurs outils pour faire des modèles bayésiens.
 
 -->
 
+# 2. Modèles mixtes/hiérarchiques
+
+<br><br>
+$$ y = \alpha + \beta x + \epsilon $$
+
+$$ \epsilon \sim \text{Normale}(0,\sigma^{2}) $$
+<br>
+<p style='text-align: center'>ou</p>
+<br>
+$$ \mu = \alpha + \beta x $$
+
+$$ y \sim \text{Normale}(\mu,\sigma^{2}) $$
+
+
+## Modèle linéaire hiérarchique simple
+
+<br><br>
+$$ y_{ij} = \alpha + \beta x_{ij} + \tau_{i} + \epsilon_{ij}$$
+
+$$ \tau_{i} \sim \text{Normale}(0,\,\sigma_{\tau}^{2}) $$
+
+$$ \epsilon_{ij} \sim \text{Normale}(0,\sigma_{\epsilon}^{2})\ $$
+
+<br><br>
+<p style='text-align: center'>où il y a $i$ groupes et $j$ observations par groupe</p>
+
+## Autre formulation
+
+<br><br>
+$$ \mu_{ij} = \alpha_{i} + \beta x_{ij}$$
+
+$$ \alpha_{i} \sim \text{Normale}(\alpha,\,\sigma_{\alpha}^{2})\ $$
+
+$$ y_{ij} \sim \text{Normale}(\mu_{ij},\,\sigma_{\epsilon}^{2})\ $$
+<br><br>
+<p style='text-align: center'>Un modèle est dit hiérarchique lorsque certains de ses paramètres sont définis par une probabilité de distribution.</p>
+
+```{r, eval = FALSE, include = FALSE, message = FALSE, warning = FALSE}
+library(lme4)
+library(ggeffects)
+
+
+set.seed(1234)
+ng<-50
+nobs<-50
+n<-ng*nobs
+id<-gl(ng,nobs)
+
+# valeurs fictives des variables explicatives selon une distribution uniforme
+x1<-runif(n,0,100)
+x2<-runif(n,0,10)
+x3<-runif(n,0,1)
+
+# valeurs des paramètres beta
+b0<-100
+b1<-0.2
+b2<-1
+b3<--10
+
+reb0<-rep(rnorm(ng,0,15),each=nobs)
+reb1<-rep(rnorm(ng,0,0.25),each=nobs)
+reb2<-rep(rnorm(ng,0,0.01),each=nobs)
+reb3<-rep(rnorm(ng,0,1),each=nobs)
+
+# prédicteur linéaire
+mu<-(b0+reb0)+(b1+reb1)*x1+(b2+reb2)*x2+(b3+reb3)*x3
+
+# observations à partir d'une distribution normale avec un écart-type de 5
+y<-rnorm(n,mu,5)
+
+# données
+d<-data.frame(y,x1,x2,x3)
+
+m<-lmer(y~x1+x2+x3+(1|id),data=d)
+
+g<-ggpredict(m,terms=c("x1","id [sample=20]"),type="random")
+plot(g, add.data = TRUE, show_ci = FALSE, colors = rep("black",20), show_legend = FALSE)
+
+m<-lmer(y~x1+x2+x3+(x1|id),data=d)
+
+g<-ggpredict(m,terms=c("x1","id [sample=20]"),type="random")
+plot(g, add.data = TRUE, show_ci = FALSE, colors = rep("black",20), show_legend = FALSE)
+
+```
+
+## Simulons un exemple
+
+```{r, message = FALSE, warning = FALSE}
+
+set.seed(12345)
+ng <- 20
+nobs <- 10
+n <- ng * nobs
+id <- gl(ng, nobs)
+
+# valeurs fictives des variables explicatives selon une distribution uniforme
+x <- runif(n, 0, 100)
+
+# valeurs des paramètres
+a <- 100
+b <- 1
+
+# on génère l'effet aléatoire pour chaque groupe
+rea <- rep(rnorm(ng, 0, 20), each = nobs)
+
+# prédicteur linéaire 
+mu <- (a + rea) + b * x
+
+# observations à partir d'une distribution normale avec un écart-type de 5
+y <- rnorm(n, mu, 5)
+
+# données
+d <- data.frame(y, x)
+
+```
+
+## Illustrons le modèle
+
+```{r, message = FALSE, warning = FALSE}
+
+library(lme4)
+library(ggeffects)
+
+m <- lmer(y ~ x + (1|id), data = d)
+
+g <- ggpredict(m, terms = c("x", "id [sample=20]"), type = "random")
+plot(g, add.data = TRUE, show_ci = FALSE, colors = rep("black", 20), show_legend = FALSE)
+
+```
+
+
+## Illustrons les pentes par individus
+
+```{r, message = FALSE, warning = FALSE}
+
+g <- ggpredict(m, terms = c("x", "id [sample=20]"), type = "random")
+plot(g, add.data = TRUE, show_ci = FALSE, colors = sample(colors(), 20))
+
+```
+
+
+## Retrouvons les paramètres
+
+La variance de l'effet aléatoire était de 20² et la variance résiduelle était de 5².
+```{r, message = FALSE, warning = FALSE}
+
+summary(m)
+
+```
+
+## Récupérons ces effets
+
+```{r, message = FALSE, warning = FALSE}
+fixef(m)
+ranef(m)
+apply(ranef(m)$id, 2, sd)
+```
+
+## Coefficients
+
+```{r, message = FALSE, warning = FALSE}
+coef(m)
+```
+
+
+## Complexifions le modèle
+
+```{r, message = FALSE, warning = FALSE}
+b
+
+reb <- rep(rnorm(ng, 0, 0.5), each = nobs)
+
+mu <- (a + rea) + (b + reb) * x
+
+y <- rnorm(n, mu, 5)
+
+d <- data.frame(y, x)
+
+```
+
+
+## Illustrons les pentes
+
+```{r, message = FALSE, warning = FALSE}
+
+m <- lmer(y ~ x + (x|id), data = d)
+
+g <- ggpredict(m, terms = c("x", "id [sample=20]"), type = "random")
+plot(g, add.data = TRUE, show_ci = FALSE, colors = rep("black",20), show_legend = FALSE)
+
+```
+
+
+## Retrouvons les paramètres
+
+La variance de l'effet aléatoire sur la pente était de (0.5)².
+```{r, message = FALSE, warning = FALSE}
+
+summary(m)
+
+```
+
+
+## Récupérons ces effets
+```{r, message = FALSE, warning = FALSE}
+fixef(m)
+ranef(m)
+apply(ranef(m)$id, 2, sd)
+```
+
+
+```{r, message = FALSE, warning = FALSE}
+coef(m)
+```
+
+
+## Formulations
+
+```{r, message = FALSE, warning = FALSE, eval = FALSE}
+
+m <- lmer(y ~ x + (1|id), data = d)
+
+m <- lmer(y ~ x + (x|id), data = d) # équivalent à (1 + x|id)
+
+m <- lmer(y ~ x + (0 + x|id), data = d)
+
+m <- lmer(y ~ x + (1|id) + (0 + x|id), data = d)
+
+```
+
+## Corrélations _intercepts_/pentes
+
+```{r, message = FALSE, warning = FALSE, eval = FALSE}
+
+m <- lmer(y ~ x + (1|id) + (0 + x|id), data = d)
+
+```
+<br>
+Le dernier est équivalent à
+<br>
+```{r, message = FALSE, warning = FALSE, eval = FALSE}
+
+m <- lmer(y ~ x + (x||id), data = d)
+
+```
+<br>
+et signifie qu'on assume que l'_intercept_ et la pente ne sont pas corrélées ou qu'on ne veut pas estimer cette corrélation. En pratique, il n'y a pas énormément de raison de faire cela et par défaut le modèle va estimer cette corrélation.
+
+## Effets aléatoires croisés
+
+Supposons que nous avons des individus observés plusieurs fois par année et ce sur plusieurs années.
+
+```{r, message = FALSE, warning = FALSE, eval = FALSE}
+
+m <- lmer(y ~ x + (1|id) + (1|year), data = d)
+
+```
+
+## Effets aléatoires nichés
+
+Supposons maintenant que les individus sont annuels et qu'ils ne sont observés que pour des années particulières.
+<br>
+```{r, message = FALSE, warning = FALSE, eval = FALSE}
+
+m <- lmer(y ~ x + (1|year/id), data = d)
+
+```
+<br>
+Équivalent à:
+<br>
+```{r, message = FALSE, warning = FALSE, eval = FALSE}
+
+m <- lmer(y ~ x + (1|year) + (1|year:id), data = d)
+
+```
+
+## Quand utiliser les effets aléatoires?
+
+<br>
+
+- Mesures répétées sur certaines unités ou individus
+
+- Les observations sont regroupées sous des structures ou ne sont pas indépendantes
+
+- Il y a de la réplication à plusieurs niveaux de la hiérarchie
+
+- On veut estimer la variance ou généraliser à une population d'unités d'échantillonnage
+
+
+
+## Formulation matricielle
+
+<br><br>
+<!-- $$ \mu_{ij} = \alpha_{i} + \beta x_{ij}$$
+
+$$ \alpha_{i} \sim \text{Normale}(\alpha,\,\sigma_{\alpha}^{2})\ $$
+
+$$ \textbf{y} \sim \text{Normale}(\mu_{ij},\,\sigma_{\epsilon}^{2})\ $$ -->
+
+
+$$\boldsymbol{y} \sim \text{Normale}(\mathbf{\beta}\mathbf{X}, \mathbf{I}\sigma^2)$$
+
+$$\boldsymbol{y} \sim \text{Normale}(\mathbf{\beta}\mathbf{X}, \mathbf{\Sigma})$$
+
+
+
+
+## Effet spatial, temporel, phylogénétique
+
+<br>
+Autocorrélation spatiale, temporelle, phylogénétique, etc...
+
+## Régularisation (_shrinkage_)
+
+<br>
+_Complete pooling_
+<br><br>
+_No pooling_
+<br><br>
+_Partial pooling_
+
+
+## Problèmes, questionnements
+
+<br><br>
+<p style='text-align: center'>**La GLMM FAQ!**</p>
+<br>
+<p style='text-align: center'>[https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html](https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html)</p>
+
+
+
 # Liens utiles
 
 [A protocol for data exploration to avoid common statistical problems](https://doi.org/10.1111/j.2041-210X.2009.00001.x)
