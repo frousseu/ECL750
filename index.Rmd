@@ -90,7 +90,7 @@ h1.title {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  margin-top: 100vh;
+  margin-top: 5vh;
   padding-top: 20px;
   padding-bottom: 50px;
   color: DarkGreen;
@@ -2076,485 +2076,6 @@ All families available in GLMs are also available in GAMs and others are also av
 
 -->
 
-<!--
-
-# 4. Vraisemblance et statistiques bayésiennes
-
-## Rappel des probabilités
-
-Quelle est la probabilité d'obtenir 2 fois pile en tirant une pièce de monnaie 2 fois?
-
-### Pile ou face
-
-On doit multiplier la probabilité de chaque événement pour obtenir la probabilité combinée de ces deux événements. Si $P(pile) = 0.5$ (*i.e.* la probabilité d'otenir pile), on a:
-
-<br>
-$$P(pile,pile) = P(pile) \times P(pile) = 0.5 \times 0.5 = 0.25$$
-<br>
-
-
-
-### Avec R
-
-On peut calculer ceci avec R et la fonction `dbinom`.
-
-```{r}
-dbinom(0,size=1,p=0.5) * dbinom(0,size=1,p=0.5)
-```
-
-<br>
-On peut également appliquer la fonction `dbinom` à un vecteur de valeur. Ceci nous donne un vecteur de (densité de) probabilité et on peut multiplier ces valeurs entre elles avec la fonction `prod`.
-
-```{r}
-prod(dbinom(c(0,0),size=1,p=0.5))
-```
-
-
-## Vraisemblance
-
-La vraisemblance (*likelihood*) représente la plausibilité de valeurs de paramètres en fonction de données observées. L'utlisation de la vraisemblance implique l'utilisation de distribution de probablités pour représenter le lien entre les observations et les modèles.
-<br><br>
-Pour quantifier la vraisemblance, on peut utiliser une fonction de vraisemblance (*likelihood function*).
-<br>
-$$L(\theta|data) = P(data|\theta)$$
-<br>
-$data$: données
-<br>
-$\theta$: paramètres du modèle
-<br><br>
-$L(\theta|data)$: fonction de vraisemblance
-<br>
-$P(data|\theta)$: vraisemblance (*likelihood*)
-
-<br>
-Ici, $L(\theta|data)$ est la fonction de vraisemblance et l'équation précédente nous dit que la vraisemblance des paramètres conditonnelle aux paramètres $\theta$ est égale à la (densité de) probabilité des données conditionnelle aux paramètres $\theta$.
-
-
-
-### Maximum de vraisemblance
-
-L'idée derrière le maximum de vraisemblance (*maximum likelihood*) est de déterminer la valeur des paramètres qui rend l'observation des données la plus probable.
-
-
-<br><br>
-Une grande partie des paramètres que nous estimons sont estimés par la méthode du maximum de vraisemblance. 
-<br>
-Certaines méthodes plus classique comme la miminimisation de la somme des carrés dans la régression standard sont équivalente à la maximisation de la vraisemblance. La sélection de modèles par AIC repose sur l'utilisation du maximum de vraisemblance. 
-
-
-### Exemple
-
-Simulons `n = 20` présences/absences avec une probabilité de `p = 0.5`. Ensuite, calculons la vraisemblance d'observer les données générées en fonction de plusieurs valeurs du paramètre p, qui ici est une probabilité.   
-
-<br>
-```{r}
-set.seed(123)
-p<-0.5
-y<-rbinom(20,1,0.5)
-
-probs<-seq(0,1,by=0.01)
-l<-sapply(probs,function(i){
-  prod(dbinom(y,size=1,prob=i)) # likelihood
-})
-```
-
-<br>
-Pour calculer la vraisemblance, on utilise la fonction dbinom qui permet de calculer pour chaque valeur observée une (densité de) probabilité. En calculant le produit `prod` de toutes ces valeurs, on obtient la valeur de la fonction de vraisemblance pour l'observation de l'ensemble de ces données pour une valeur donnée du paramètre `p`. On calcule ensuite ces valeurs de vraisemblance pour un ensemble de valeur de `p`.
-
-
-### Profil de vraisemblance
-
-On peut par la suite illustrer la vraisemblance d'obtenir les valeurs observées pour les différentes valeurs de `p`. Ceci permet d'illustrer le profile de vraisemblance (*likelihood profile*).
-
-```{r}
-plot(probs,l,type="l",ylab="Likelihood",xlab="Valeur du paramètre p")
-abline(v=sum(y)/length(y),lty=3)
-abline(v=0.5)
-legend("topleft",lty=c(1,3),legend=c("Probabilité réelle","Proportion de 1 dans l'échantillon"),bty="n")
-probs[which.max(l)]
-```
-
-<br>
-Le maximum de cette courbe est le maximum de vraisemblance (*maximum likelihood*), i.e. la valeur de `p` pour laquelle la probabilité d'observer les données est la plus grande. Dans ce cas précis, cette valeur est la proportion de 1 dans les données. La plupart des paramètres que nous estimons sont obtenus avec cette méthode.
-
-
-### Avec un glm
-
-Voici ce qu'on obtient avec un glm si on tente d'estimer cette probabilité. En principe, l'intercept représente cette probabilité, mais elle est sur l'échelle logit $log(p/(1-p))$. Il faut donc retransformer le tout sous l'échelle d'une probabilité avec une fonction logit inverse.
-
-```{r}
-m<-glm(y~1,family=binomial)
-summary(m)
-exp(coef(m))/(1+exp(coef(m)))
-```
-
-
-
-### Intervalle de confiance 
-
-On peut également estimer un intervalle de confiance autour de cette probabilité avec la fonction `confint.` Différentes méthodes existent pour obtenir un intervallede confiance à partir d'un profil de vraisemblance, mais nous n'arboreons pas cela ici (*i.e.* *profile likelihood confidence intervals*).
-<br>
-```{r}
-ci<-confint(m) # calcul de l'intervalle de confiance sur les coefficients
-ci<-c(coef(m),ci) # intercept est l'estimation de la probabilité p
-c(exp(ci)/(1+exp(ci))) # intervalle de confiance
-
-```
-
-
-### Log de la vraisemblance
-
-Pour des raisons pratiques, on va souvent maximiser le *log* de la vraisemblance (*log-likelihood*) pour éviter des problèmes numériques associés aux très petites valeurs. On parle donc souvent de *log-likelihood* (*LL*, *logLik*, etc.).
-<br>
-Par exemple, on peut comparer la vraisemblance calculée par le glm à celle que nous avons calculée "à la mitaine" avec la fonction `dbinom` pour la valeur du paramètre qui maximise cette vraisemblance (`p = 0.55`).
-<br>
-```{r}
-prod(dbinom(y,size=1,prob=0.55))
-exp(logLik(m))
-```
-
-
-## Probabilités conditionnelles
-
-Voyons d'abord ce qu'est une probabilité conditionnelle.
-<br>
-$$P(A|B)$$
-<br>
-Ici, on représente la probabilité de $A$ considérant que $B$ s'est produit. Par exemple, quelle est la probabilité d'être infecté par la Covid-19 si on reçoit un test positif.
-<br><br>
-$$P(\textrm{infecté}|\textrm{test positif})$$
-<br><br>
-On pourrait aussi s'intéresser à la probabilité d'avoir un test positif si on est effectivement infecté.
-$$P(\textrm{test positif}|\textrm{infecté})$$
-<br>
-
-
-### Théorème de Bayes
-
-Il s'agit simplement d'une règle en théorie des probabilités qui permet de relier des probabilités conditionnelles.
-<br><br>
-$$P(A|B) = \frac{P(B|A)P(A)}{P(B)}$$
-<br><br>
-
-$P(A)$ veut dire la probbailité de $A$, indépendemment de $B$.
-<br><br>
-$P(A|B)$ veut dire la probabilité de $A$ sachant $B$. C'est une probabilité conditionelle.
-
-
-### Interprétation
-
-Un exemple classique de cette règle est le suivant. Supposons que $P(A)$ désigne la probabilité d'être infecté par la Covid-19 et que $P(B)$ désigne la probabilité de tester positif à un test de Covid-19. Ici, on a aussi $P(A')$ qui est la probabilité de ne pas être infecté.
-<br><br>
-Si on a:
-<br>
-$P(A) = 1/500 = 0.002$: proportion de personnes infectées
-
-$P(A') = 1-1/500 = 0.998$: proportion de personnes qui ne sont pas infectées
-
-$P(B|A) = 0.98$: probabilité d'un test positif si une personne est infectée
-
-$P(B|A') = 0.95$: probabilité d'un test négatif si une personne n'est pas infectée
-
-$P(B) = P(B|A)P(A) + P(B|A')P(A')$: il faut additionner les possibilités associées au cas où une personne est infectée et au cas où une personne n'est pas infectée. 
-
-<br>
-
-Quelle est la probabilité d'être infecté si on reçoit un test positif (en assumant qu'on se fait tester pour une raison autre que d'avoir des symptômes) ?
-<br>
-
-$$P(A|B) = \frac{P(B|A)P(A)}{P(B|A)P(A)+P(B|A')P(A')} = \frac{0.98 \times 0.002}{0.98 x 0.002 \times (1-0.95) \times 0.998} \approx 0.0378$$
-
-<br>
-Dans ce cas, la probabilité d'avoir réellement la Covid-19 si le test est positif n'est que d'environ 3.8 %
-
-
-## Statistiques bayésiennes
-
-Les statisiques bayésiennes se basent sur cette règle pour faire une **inteprétation probabiliste des paramètres** à partir des données.
-<br>
-$$P(\theta|data) = \frac{P(data|\theta)P(\theta)}{P(data)}$$
-<br><br>
-$data$: données
-<br>
-$\theta$: paramètres du modèle
-<br><br>
-$P(\theta|data)$: distribution postérieure (*posterior*)
-<br>
-$P(data|\theta)$: vraisemblance (*likelihood*)
-<br>
-$P(\theta)$: distribution *a priori* (*prior*) 
-<br>
-$P(data)$: distribution marginale des données (*marginal likelihood*)
-
-
-### Distribution postérieure (*posterior*)
-
-$$P(\theta|data) = \frac{P(data|\theta)P(\theta)}{P(data)}$$
-<br><br>
-La distribution postérieure $P(\theta|data)$ est ce que l'on cherche à estimer. Il s'agit d'une distribution de probabilité qui décrit les probabilités des différentes valeurs possibles du paramètre. Contrairement avec les analyses fréquentistes, on peut directement parler de la probabilité qu'un paramètre soit entre telle et telle valeur.
-
-### Vraisemblance (*likelihood*)
-
-$$P(\theta|data) = \frac{P(data|\theta)P(\theta)}{P(data)}$$
-<br><br>
-Comme vu précédemment, la vraisemblance $P(data|\theta)$ représente la probabilité des données conditionnelles à des valeurs de paramètres $\theta$.
-
-### Distribution *a priori* (*priors*)
-
-$$P(\theta|data) = \frac{P(data|\theta)P(\theta)}{P(data)}$$
-<br><br>
-Les distributions *a priori* $P(data)$ représentent nos croyances sur les valeurs des paramètres avant de faire les analyses. On les représente à l'aide de distributions de probabilité. Ces croyances représentent ce à quoi on s'attend en termes de valeurs en se basant sur nos connaissances théoriques avant de faire notre expérience.
-
-
-### Distribution marginale des données
-
-$$P(\theta|data) = \frac{P(data|\theta)P(\theta)}{P(data)} = \frac{P(data|\theta)P(\theta)}{\int P(data|\theta)P(\theta)d\theta}$$
-<br><br>
-Cette quantité $P(data)$ (*marginal likelihood*) est beaucoup plus difficile à comprendre intuitivement. Elle représente en quelque sorte la probabilité des données pour l'ensemble des valeurs de paramètres possibles (d'où l'intégrale). C'est la distribution marginale des données ou la vraisemblance marginale. Elle permet également de faire en sorte que la distribution postérieure soit une distribution de probabilité (i.e. aire sous la courbe = 1). 
-<br><br>
-Il s'agit d'une constante qui est généralewment très difficile à calculer. Des méthodes comme le MCMC permettent d'éviter de la calculer dans l'obtention de la distribution postérieure.  
-
-### En résumé
-
-$$Posterior = \frac{Likelihood \times Prior}{Marginal\;Likelihood}$$
-
-<br><br>
-
-Puisque le dénominateur est une constante et que dans bien des cas, on peut éviter de le calculer, on peut plus simplement écrire:
-
-<br><br>
-
-$$Posterior \propto Likelihood \times Prior$$
-
-<br>
-En d'autres mots, la distribution postérieure est proportionnelle à la vraisemblance et aux distributions *a priori*
-
-<br><br>
-On pourrait aussi dire qu'avec une approche bayésienne, on met à jour nos croyances à l'aide de données.
-
-
-## Avantages
-
-- Interprétation probabiliste plus facile (e.g. intervalle de confiance fréquentiste vs. bayésien)
-
-- Facilite l'estimation de modèles complexes (e.g. modèle hiérarchique)
-
-- Intégration plus facile de l'incertitude à toutes les étapes du processus
-
-- Facilite l'estimation de quantités dérivées (e.g. prédictions ou combinaisons de prédictions)
-
-- Le fait d'avoir à spécifier des priors nous force à comprendre ce que nos paramètres représentent
- 
-- Façon de penser plus naturelle, philosophiquement plus satisfaisant? 
-
-
-## Désavantages ?
-
-- Souvent plus complexe (mais pas toujours)
-
-- Modèles plus longs à estimer
-
-- Moins de solutions *clés en main*?
-
-- Nécessité de choisir et de justifier des *priors*
-
-
-## Exemple
-
-Simulons d'abord un modèle avec des paramètres connus.
-<br>
-```{r}
-set.seed(1234)
-n<-100
-x<-runif(n,0,10)
-y<-10+2*x+rnorm(n,0,10)
-d<-data.frame(y,x)
-```
-
-### Quels *priors* utiliser?
-
-Il est toujours préférable de visualiser les *priors* et de réfléchir à ce qu'ils représentent.
-<br>
-```{r,fig.height=3,fig.width=9}
-
-par(mfrow=c(1,3))
-curve(dnorm(x,0,50),from=-200,to=200,main="Intercept normal(0,50)",ylab="Density")
-curve(dnorm(x,0,5),from=-20,to=20,main="Pente normal(0,5)",ylab="Density")
-curve(dgamma(x,2,0.1),from=0,to=100,main="Écart-type gamma(2,0.1)",ylab="Density")
-
-```
-
-<br>
-Par exemple, pour la variance/écart-type du modèle, il faut idéalement un *prior* avec des valeurs strictement positives, car les valeurs négatives ne font pas de sens pour la variance. Une des possibilités est d'utiliser la distribution gamma.
-
-
-### Modèle avec brms
-
-La façon la plus "clé en main" de faire un modèle bayésien est d'utiliser le package [brms](https://CRAN.R-project.org/package=brms). Ce package permet de spécifier des modèles d'une façon très similaire aux packages fréquemment utilisés comme nlme, lme4, glmmTMB, etc. En arrière-plan, brms utilise le programme [STAN](https://mc-stan.org/) qui est un environnement de programmation pour la modélisation bayésienne.
-<br>
-```{r, message=FALSE,tidy=FALSE}
-library(brms)
-
-m <- brm(y ~ x,
-       data = d,
-       cores = 3,
-       chains = 3,
-       family = "gaussian",
-       prior = c(
-         set_prior("normal(0,5)", class = "b", coef="x"),
-         set_prior("normal(0,50)", class = "Intercept"),
-         set_prior("gamma(2,0.1)", class = "sigma")
-       ),
-       file = "C:/Users/User/Downloads/brm_model"
-     )
-
-```
-
-### Formulation du modèle
-
-On a la composante aléatoire, la composante systématique et les *priors*.
-
-<br>
-$$y \sim \mathcal{N}(\mu,\sigma^2)$$
-$$\mu = \beta_{0}+\beta_{1}x$$
-$$\beta_{0} \sim \mathcal{N}(0,50)$$
-$$\beta_{1} \sim \mathcal{N}(0,5)$$
-$$\sigma \sim \mathcal{Gamma}(2,0.1)$$
-
-
-
-### Sommaire
-
-```{r,fig.height=9,fig.width=6}
-summary(m)
-```
-<br>
-Notez encore une fois ici qu'on peut faire une interprétation probabiliste plus naturelle des intervalles de confiance. Contrairement aux analyses fréquentistes, on peut dire que le probabilité que la valeur d'un paramètre soit entre les bornes inférieures et supérieures d'un intervalle de confiance à 95% est de 95%. En fait, avec une approche bayésienne, on parle plutôt d'intervalle de crédibilité (*credible interval*).
-
-### Visualisation des paramètres
-
-```{r,fig.height=8,fig.width=9}
-plot(m)
-```
-
-Les distributions postérieures des paramètres sont illustrées à gaude. À droite, les chaînes de MCMC sont illustrées (nous y reviendront). <!--Avec les modèles bayésiens, il faut toujours vérifier la convergence des chaînes.-->
-
-<!--
-
-## MCMC
-
-Le MCMC (*Markov Chain Monte Carlo*) est une classe d'algorithmes permettant d'échantillonner à partir d'une distribution de probabilité. Il s'agit d'une approche qui permet d'éviter des calculs complexes, voire impossible, en utilisant une approche d'échantillonnage,
-<br><br>
-Dans un contexte bayésien, le MCMC permet d'échantillonner à partir d'une distribution postérieure. Autrement dit, la distribution postérieure de chaque paramètre estimé dans un contexte bayésien peut entre autre être obtenue par cette méthode d'échantillonnage.
-<br><br>
-Sous certaines conditions, les valeurs échantillonnées représenteront la distribution postérieure de chaque paramètre. 
-
-### Échantillonnage des chaînes
-
-L'échantillonnage par MCMC se fait de façon séquentielle, *i.e.* que les valeurs seront échantillonnées les unes à la suite des autres. Dans bien des cas, les valeurs actuelles seront dépendentes (corrélées) des valeurs précédentes. On peut parler ici de chaînes pour désigner l'ensemble des valeurs échantillonnées de façon séquentielle.
-<br><br>
-Pour démarrer chaque chaîne, il faut d'abord sélectionner une valeur de départ pour chaque paramètre estimé. Cette valeur de départ peut potentiellement être très loin d'une valeur probable.
-<br><br>
-Éventuellement, les chaînes vont s'éloigner de ces valeurs de départ pour converger vers les distributions postérieures. À ce moment, on dira que l'échantillonnage se fait véritablement à partir des distributions postérieures.
-<br>
-```{r,fig.height=4,fig.width=4.5}
-plot(m)
-```
-
-### Convergence des chaînes
-
-Avec les analyses bayésiennes où les paramètres sont estimés par MCMC, il faut donc vérifier la convergence des chaînes pour s'assurer que les valeurs échantillonnées représentent bien les distributions postérieures. 
-<br><br>
-On élimine souvent une certaine portion du début des chaînes pour enlever les valeurs échantillonnées, alors que les chaînes n'ont pas convergées. On parle souvent de *burnin* pous désigner cette partie des chaînes.
-<br><br>
-Il est également très fréquent d'utiliser plusieurs chaînes (3-4) pour un même paramètre ce qui permet de s'assurer que les chaînes ont toutes convergées en vérifiant qu'elles ont toutes convergées au même endroit. En général, on choisira des valeurs de départ différentes pour chacune de chaque chaîne.
-<br><br>
-On peut vérifier la convergence des chaînes avec le `Rhat` (*potential scale reduction statistic* ou *Gelman-Rubin statistic*). Intuitivement, pour un paramètre donné, cette valeur compare la variance inter-chaîne à la variance intra-chaîne pour évaluer si les chaînes ont convergé au même endroit. Si c'est le cas, le `Rhat` sera très près de 1 (`Rhat` <= 1.01)
-<br>
-```{r}
-summary(m)
-```
-
-## Priors
-
-L'utilisation de *priors* est souvent vue comme étant la partie la plus controversée des statistiques bayésiennes. Qu'en pensez-vous?
-<br><br>
-Idéalement, il faut toujours avoir une petite idée de l'influence des *priors* sur l'analyses. Pour cela il est bien de comparer les distributions postérieures aux *priors*. On peut également faire dans certains cas des analyses de sensibilité pour quantifier cette influence.
-<br><br>
-Plus on a de données, moins les *priors* auront d'influence sur l'estimation des paramètres.
-
-### Types de *priors*
-
-- Informatif: basé sur la théorie, reflète les connaissances.
-
-- Non-informatif: reflète l'absence de connaissances ou le désir de ne pas influencer les résultats.
-
-- Plat (*flat*): similaire à non-informatif.
-
-- Légèrement informatif (*weaky informative*): la théorie n'est pas assez développée pour utiliser des *priors* informatifs, mais assez pour savoir que certaines valeurs ne sont pas probables.
-
-- Par défaut: valeurs par défaut utilisées par les logiciels ou les packages.
-
-- Régularisant (*regularizing*): permet de circonscrire les valeurs obtenues et de pénaliser les valeurs élevées dans un contexte prédictif.
-
-- Etc.
-
-<br>
-
-Voir notamment [Lemoine 2019](https://doi.org/10.1111/oik.05985) et [Banner et al. 2020](https://doi.org/10.1111/2041-210X.13407) pour une discussion sur l'utilisation des priors en écologie.
-
-
-### Quels *priors* utiliser?
-
-Il faut aussi sélectionner une distribution approriée pour représenter nos *priors* et les distributions utilisées doivent être appropriées pour un paramètre donnée. Le groupe qui travaille sur la plateforme [STAN](https://mc-stan.org/) a plusieurs recommandations de *priors* à utiliser dépendemment du contexte (*priors* pour des pentes, *priors* pour des variances, *priors* pour des variances dans un contexte de modèles hiérarchiques, etc.)
-<br>
-Voir [Prior Choice Recommendations](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations) pour des recommandations.
-
-
-## Attention aux *priors* "non-informatifs"!
-
-Les *priors* non-informatifs ne le sont pas toujours sous l'échelle du paramètre. Par exemple, si vous tentez d'estimer une probabilité et que vous utiliser une distribution normale comme *prior* pour l'intercept du modèle, il se peut que ce *prior* soit très informatif sous l'échelle du prédicteur linéaire qui est relié à la probabilité par une fonction logit. Supposons un glm binomial avec seulement un intercept.
-<br><br>
-$$ y \sim \mathcal{Binom}(1,p) = \mathcal{Bernoulli}(p)$$
-<br>
-$$ logit(p) = log\left(\frac{p}{1-p}\right) = \beta_{0} $$
-<br>
-$$ \beta_{0} \sim \mathcal{N}(0,10) $$
-<br>
-
-```{r,fig.height=4,fig.width=8,}
-n<-10000
-x<-rnorm(n,0,10)
-par(mfrow=c(1,2))
-hist(x,breaks=50,main="Valeurs a priori de l'intercept")
-hist(exp(x)/(1+exp(x)),breaks=50,main="Lorsque converties en probabilité")
-
-```
-<br>
-Autrement dit, le *prior* est très informatif!
-
-
-## Outils
-
-Il existe plusieurs outils pour faire des modèles bayésiens.
-<br><br>
-
-[**WinBUGS**](https://www.mrc-bsu.cam.ac.uk/software/bugs/the-bugs-project-winbugs/) Un des premiers outils, mais un peu lent
-<br><br>
-[**JAGS**](https://sourceforge.net/projects/mcmc-jags/files/Manuals/) Similaire à BUGS, mais un peu plus rapide
-<br><br>
-[**STAN**](https://mc-stan.org/) Relativement nouveau, rapide et bien documenté
-<br><br>
-[**Nimble**](https://r-nimble.org/) Très nouveau
-<br><br>
-[**MCMCglmm**](https://CRAN.R-project.org/package=MCMCglmm) Modèles animal?
-<br><br>
-[**brms**](https://CRAN.R-project.org/package=brms) Facile d'utilisation
-<br><br>
-[**INLA**](https://www.r-inla.org/) Modèles spatiaux
-
--->
-
 # 2. Modèles mixtes/hiérarchiques
 
 <br><br>
@@ -2883,6 +2404,666 @@ _Partial pooling_
 <p style='text-align: center'>**La GLMM FAQ!**</p>
 <br>
 <p style='text-align: center'>[https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html](https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html)</p>
+
+
+# 3. Vraisemblance et statistiques bayésiennes
+
+## Rappel des probabilités
+
+Quelle est la probabilité d'obtenir 2 fois pile en tirant une pièce de monnaie 2 fois?
+
+### Pile ou face
+
+On doit multiplier la probabilité de chaque événement pour obtenir la probabilité combinée de ces deux événements. Si $P(pile) = 0.5$ (*i.e.* la probabilité d'otenir pile), on a:
+
+<br>
+$$P(pile,pile) = P(pile) \times P(pile) = 0.5 \times 0.5 = 0.25$$
+<br>
+
+
+
+### Avec R
+
+On peut calculer ceci avec R et la fonction `dbinom`.
+
+```{r}
+dbinom(0,size=1,p=0.5) * dbinom(0,size=1,p=0.5)
+```
+
+<br>
+On peut également appliquer la fonction `dbinom` à un vecteur de valeur. Ceci nous donne un vecteur de (densité de) probabilité et on peut multiplier ces valeurs entre elles avec la fonction `prod`.
+
+```{r}
+prod(dbinom(c(0,0),size=1,p=0.5))
+```
+
+
+## Vraisemblance
+
+La vraisemblance (*likelihood*) représente la plausibilité de valeurs de paramètres en fonction de données observées. L'utlisation de la vraisemblance implique l'utilisation de distribution de probablités pour représenter le lien entre les observations et les modèles.
+<br><br>
+Pour quantifier la vraisemblance, on peut utiliser une fonction de vraisemblance (*likelihood function*).
+<br>
+$$L(\theta|data) = P(data|\theta)$$
+<br>
+$data$: données
+<br>
+$\theta$: paramètres du modèle
+<br><br>
+$L(\theta|data)$: fonction de vraisemblance
+<br>
+$P(data|\theta)$: vraisemblance (*likelihood*)
+
+<br>
+Ici, $L(\theta|data)$ est la fonction de vraisemblance et l'équation précédente nous dit que la vraisemblance des paramètres conditonnelle aux paramètres $\theta$ est égale à la (densité de) probabilité des données conditionnelle aux paramètres $\theta$.
+
+
+
+### Maximum de vraisemblance
+
+L'idée derrière le maximum de vraisemblance (*maximum likelihood*) est de déterminer la valeur des paramètres qui rend l'observation des données la plus probable.
+
+
+<br><br>
+Une grande partie des paramètres que nous estimons sont estimés par la méthode du maximum de vraisemblance. 
+<br>
+Certaines méthodes plus classique comme la miminimisation de la somme des carrés dans la régression standard sont équivalente à la maximisation de la vraisemblance. La sélection de modèles par AIC repose sur l'utilisation du maximum de vraisemblance. 
+
+
+### Exemple
+
+Simulons `n = 20` présences/absences avec une probabilité de `p = 0.5`. Ensuite, calculons la vraisemblance d'observer les données générées en fonction de plusieurs valeurs du paramètre p, qui ici est une probabilité.   
+
+<br>
+```{r}
+set.seed(123)
+p<-0.5
+y<-rbinom(20,1,0.5)
+
+probs<-seq(0,1,by=0.01)
+l<-sapply(probs,function(i){
+  prod(dbinom(y,size=1,prob=i)) # likelihood
+})
+```
+
+<br>
+Pour calculer la vraisemblance, on utilise la fonction dbinom qui permet de calculer pour chaque valeur observée une (densité de) probabilité. En calculant le produit `prod` de toutes ces valeurs, on obtient la valeur de la fonction de vraisemblance pour l'observation de l'ensemble de ces données pour une valeur donnée du paramètre `p`. On calcule ensuite ces valeurs de vraisemblance pour un ensemble de valeur de `p`.
+
+
+### Profil de vraisemblance
+
+On peut par la suite illustrer la vraisemblance d'obtenir les valeurs observées pour les différentes valeurs de `p`. Ceci permet d'illustrer le profile de vraisemblance (*likelihood profile*).
+
+```{r}
+plot(probs,l,type="l",ylab="Likelihood",xlab="Valeur du paramètre p")
+abline(v=sum(y)/length(y),lty=3)
+abline(v=0.5)
+legend("topleft",lty=c(1,3),legend=c("Probabilité réelle","Proportion de 1 dans l'échantillon"),bty="n")
+probs[which.max(l)]
+```
+
+<br>
+Le maximum de cette courbe est le maximum de vraisemblance (*maximum likelihood*), i.e. la valeur de `p` pour laquelle la probabilité d'observer les données est la plus grande. Dans ce cas précis, cette valeur est la proportion de 1 dans les données. La plupart des paramètres que nous estimons sont obtenus avec cette méthode.
+
+
+### Avec un glm
+
+Voici ce qu'on obtient avec un glm si on tente d'estimer cette probabilité. En principe, l'intercept représente cette probabilité, mais elle est sur l'échelle logit $log(p/(1-p))$. Il faut donc retransformer le tout sous l'échelle d'une probabilité avec une fonction logit inverse.
+
+```{r}
+m<-glm(y~1,family=binomial)
+summary(m)
+exp(coef(m))/(1+exp(coef(m)))
+```
+
+
+
+### Intervalle de confiance 
+
+On peut également estimer un intervalle de confiance autour de cette probabilité avec la fonction `confint.` Différentes méthodes existent pour obtenir un intervallede confiance à partir d'un profil de vraisemblance, mais nous n'arborderons pas cela ici (*i.e.* *profile likelihood confidence intervals*).
+<br>
+```{r}
+ci<-confint(m) # calcul de l'intervalle de confiance sur les coefficients
+ci<-c(coef(m),ci) # intercept est l'estimation de la probabilité p
+c(exp(ci)/(1+exp(ci))) # intervalle de confiance
+
+```
+
+
+### Log de la vraisemblance
+
+Pour des raisons pratiques, on va souvent maximiser le *log* de la vraisemblance (*log-likelihood*) pour éviter des problèmes numériques associés aux très petites valeurs. On parle donc souvent de *log-likelihood* (*LL*, *logLik*, etc.).
+<br>
+Par exemple, on peut comparer la vraisemblance calculée par le glm à celle que nous avons calculée "à la mitaine" avec la fonction `dbinom` pour la valeur du paramètre qui maximise cette vraisemblance (`p = 0.55`).
+<br>
+```{r}
+prod(dbinom(y,size=1,prob=0.55))
+exp(logLik(m))
+```
+
+
+## Probabilités conditionnelles
+
+Voyons d'abord ce qu'est une probabilité conditionnelle.
+<br>
+$$P(A|B)$$
+<br>
+Ici, on représente la probabilité de $A$ considérant que $B$ s'est produit. Par exemple, quelle est la probabilité d'être infecté par la Covid-19 si on reçoit un test positif.
+<br><br>
+$$P(\textrm{infecté}|\textrm{test positif})$$
+<br><br>
+On pourrait aussi s'intéresser à la probabilité d'avoir un test positif si on est effectivement infecté.
+$$P(\textrm{test positif}|\textrm{infecté})$$
+<br>
+
+
+### Règle de Bayes
+
+Il s'agit simplement d'une règle en théorie des probabilités qui permet de relier des probabilités conditionnelles.
+<br><br>
+$$P(A|B) = \frac{P(B|A)P(A)}{P(B)}$$
+<br><br>
+
+$P(A)$ veut dire la probbailité de $A$, indépendemment de $B$.
+<br><br>
+$P(A|B)$ veut dire la probabilité de $A$ sachant $B$. C'est une probabilité conditionnelle.
+
+
+### Interprétation
+
+Un exemple classique de cette règle est le suivant. Supposons que $P(A)$ désigne la probabilité d'être infecté par la Covid-19 et que $P(B)$ désigne la probabilité de tester positif à un test de Covid-19. Ici, on a aussi $P(A')$ qui est la probabilité de ne pas être infecté.
+<br><br>
+Si on a:
+<br>
+$P(A) = 1/500 = 0.002$: proportion de personnes infectées
+
+$P(A') = 1-1/500 = 0.998$: proportion de personnes qui ne sont pas infectées
+
+$P(B|A) = 0.98$: probabilité d'un test positif si une personne est infectée
+
+$P(B|A') = 0.95$: probabilité d'un test négatif si une personne n'est pas infectée
+
+$P(B) = P(B|A)P(A) + P(B|A')P(A')$: il faut additionner les possibilités associées au cas où une personne est infectée et au cas où une personne n'est pas infectée. 
+
+<br>
+
+Quelle est la probabilité d'être infecté si on reçoit un test positif (en assumant qu'on se fait tester pour une raison autre que d'avoir des symptômes) ?
+<br>
+
+$$P(A|B) = \frac{P(B|A)P(A)}{P(B|A)P(A)+P(B|A')P(A')} = \frac{0.98 \times 0.002}{0.98 x 0.002 \times (1-0.95) \times 0.998} \approx 0.0378$$
+
+<br>
+Dans ce cas fictif, la probabilité d'avoir réellement la Covid-19 si le test est positif n'est que d'environ 3.8 %
+
+
+## Statistiques bayésiennes
+
+Les statisiques bayésiennes se basent sur cette règle pour faire une **inteprétation probabiliste des paramètres** à partir des données.
+<br>
+$$P(\theta|data) = \frac{P(data|\theta)P(\theta)}{P(data)}$$
+<br><br>
+$data$: données
+<br>
+$\theta$: paramètres du modèle
+<br><br>
+$P(\theta|data)$: distribution postérieure (*posterior*)
+<br>
+$P(data|\theta)$: vraisemblance (*likelihood*)
+<br>
+$P(\theta)$: distribution *a priori* (*prior*) 
+<br>
+$P(data)$: distribution marginale des données (*marginal likelihood*)
+
+
+### Distribution postérieure (*posterior*)
+
+$$P(\theta|data) = \frac{P(data|\theta)P(\theta)}{P(data)}$$
+<br><br>
+La distribution postérieure $P(\theta|data)$ est ce que l'on cherche à estimer. Il s'agit d'une distribution de probabilité qui décrit les probabilités des différentes valeurs possibles du paramètre. Contrairement avec les analyses fréquentistes, on peut directement parler de la probabilité qu'un paramètre soit entre telle et telle valeur.
+
+### Vraisemblance (*likelihood*)
+
+$$P(\theta|data) = \frac{P(data|\theta)P(\theta)}{P(data)}$$
+<br><br>
+Comme vu précédemment, la vraisemblance $P(data|\theta)$ représente la probabilité des données conditionnelles à des valeurs de paramètres $\theta$.
+
+### Distribution *a priori* (*priors*)
+
+$$P(\theta|data) = \frac{P(data|\theta)P(\theta)}{P(data)}$$
+<br><br>
+Les distributions *a priori* $P(data)$ représentent nos croyances sur les valeurs des paramètres avant de faire les analyses. On les représente à l'aide de distributions de probabilité. Ces croyances représentent ce à quoi on s'attend en termes de valeurs en se basant sur nos connaissances théoriques avant de faire notre expérience.
+
+
+### Distribution marginale des données
+
+$$P(\theta|data) = \frac{P(data|\theta)P(\theta)}{P(data)} = \frac{P(data|\theta)P(\theta)}{\int P(data|\theta)P(\theta)d\theta}$$
+<br><br>
+Cette quantité $P(data)$ (*marginal likelihood*) est beaucoup plus difficile à comprendre intuitivement. Elle représente en quelque sorte la probabilité des données pour l'ensemble des valeurs de paramètres possibles (d'où l'intégrale). C'est la distribution marginale des données ou la vraisemblance marginale. Elle permet également de faire en sorte que la distribution postérieure soit une distribution de probabilité (i.e. aire sous la courbe = 1). 
+<br><br>
+Il s'agit d'une constante qui est généralement très difficile à calculer. Des méthodes comme le MCMC permettent d'éviter de la calculer dans l'obtention de la distribution postérieure.  
+
+### En résumé
+
+$$Posterior = \frac{Likelihood \times Prior}{Marginal\;Likelihood}$$
+
+<br><br>
+
+Puisque le dénominateur est une constante et que dans bien des cas, on peut éviter de le calculer, on peut plus simplement écrire:
+
+<br><br>
+
+$$Posterior \propto Likelihood \times Prior$$
+
+<br>
+En d'autres mots, la distribution postérieure est proportionnelle à la vraisemblance et aux distributions *a priori*
+
+<br><br>
+On pourrait aussi dire qu'avec une approche bayésienne, on met à jour nos croyances à l'aide de données.
+
+
+## Avantages
+
+- Interprétation probabiliste plus facile (e.g. intervalle de confiance fréquentiste vs. bayésien)
+
+- Facilite l'estimation de modèles complexes (e.g. modèle hiérarchique)
+
+- Intégration plus facile de l'incertitude à toutes les étapes du processus
+
+- Facilite l'estimation de quantités dérivées (e.g. prédictions ou combinaisons de prédictions)
+
+- Le fait d'avoir à spécifier des *priors* nous force à comprendre ce que nos paramètres représentent
+ 
+- Façon de penser plus naturelle, philosophiquement plus satisfaisante? 
+
+
+## Désavantages ?
+
+- Souvent plus complexe (mais pas toujours)
+
+- Modèles plus longs à estimer
+
+- Moins de solutions clés en main?
+
+- Nécessité de choisir et de justifier ses *priors*
+
+
+## Exemple
+
+Simulons d'abord un modèle avec des paramètres connus.
+<br>
+```{r}
+set.seed(1234)
+n<-100
+x<-runif(n,0,10)
+y<-10+2*x+rnorm(n,0,10)
+d<-data.frame(y,x)
+```
+
+### Quels *priors* utiliser?
+
+Il est toujours préférable de visualiser les *priors* et de réfléchir à ce qu'ils représentent.
+<br>
+```{r,fig.height=3,fig.width=9}
+
+par(mfrow=c(1,3))
+curve(dnorm(x,0,50),from=-200,to=200,main="Intercept normal(0,50)",ylab="Density")
+curve(dnorm(x,0,5),from=-20,to=20,main="Pente normal(0,5)",ylab="Density")
+curve(dgamma(x,2,0.1),from=0,to=100,main="Écart-type gamma(2,0.1)",ylab="Density")
+
+```
+
+<br>
+Par exemple, pour la variance/écart-type du modèle, il faut idéalement un *prior* avec des valeurs strictement positives, car les valeurs négatives ne font pas de sens pour la variance. Une des possibilités est d'utiliser la distribution gamma.
+
+
+### Modèle avec brms
+
+La façon la plus "clé en main" de faire un modèle bayésien est d'utiliser le package [brms](https://CRAN.R-project.org/package=brms). Ce package permet de spécifier des modèles d'une façon très similaire aux packages fréquemment utilisés comme nlme, lme4, glmmTMB, etc. En arrière-plan, brms utilise le programme [STAN](https://mc-stan.org/) qui est un environnement de programmation pour la modélisation bayésienne.
+<br>
+
+```{r, message = FALSE, warning = FALSE, tidy = FALSE, results = 'hide'}
+library(brms)
+
+m <- brm(y ~ x,
+       data = d,
+       cores = 3,
+       chains = 3,
+       family = "gaussian",
+       prior = c(
+         set_prior("normal(0,5)", class = "b", coef="x"),
+         set_prior("normal(0,50)", class = "Intercept"),
+         set_prior("gamma(2,0.1)", class = "sigma")
+       )
+     )
+
+```
+
+
+### Visualisation
+```{r, message = FALSE,tidy = FALSE}
+
+library(ggeffects)
+g <- ggpredict(m, terms = c("x"))
+plot(g, add.data = TRUE)
+
+```
+
+### Distribution postérieure des prédictions
+```{r, message = FALSE,tidy = FALSE}
+
+newdata <- data.frame(x = seq(min(d$x), max(d$x), length.out = 100))
+
+pp <- posterior_epred(m, newdata, ndraws = 500)
+
+plot(d$x, d$y, ylim = range(c(pp, d$y)), pch = 16, col = gray(0, 0.35)) 
+lapply(1:nrow(pp), function(i){
+  lines(newdata$x, pp[i, ], col = adjustcolor("black", 0.05))
+}) |> invisible()
+
+```
+
+
+
+
+
+### Formulation du modèle
+
+On a la composante aléatoire, la composante systématique et les *priors*.
+
+<br>
+$$y \sim \mathcal{N}(\mu,\sigma^2)$$
+$$\mu = \beta_{0}+\beta_{1}x$$
+$$\beta_{0} \sim \mathcal{N}(0,50)$$
+$$\beta_{1} \sim \mathcal{N}(0,5)$$
+$$\sigma \sim \mathcal{Gamma}(2,0.1)$$
+
+
+
+### Sommaire
+
+```{r,fig.height=9,fig.width=6}
+summary(m)
+```
+<br>
+Notez encore une fois ici qu'on peut faire une interprétation probabiliste plus naturelle des intervalles de confiance. Contrairement aux analyses fréquentistes, on peut dire que le probabilité que la valeur d'un paramètre soit entre les bornes inférieures et supérieures d'un intervalle de confiance à 95% est de 95%. En fait, avec une approche bayésienne, on parle plutôt d'intervalle de crédibilité (*credible interval*).
+
+### Visualisation des paramètres
+
+```{r,fig.height=8,fig.width=9}
+plot(m)
+```
+
+Les distributions postérieures des paramètres sont illustrées à gauche. À droite, les chaînes de MCMC sont illustrées (nous y reviendrons). <!--Avec les modèles bayésiens, il faut toujours vérifier la convergence des chaînes.-->
+
+
+## MCMC
+
+Le MCMC (*Markov Chain Monte Carlo*) est une classe d'algorithmes permettant d'échantillonner à partir d'une distribution de probabilité. Il s'agit d'une approche qui permet d'éviter des calculs complexes, voire impossible, en utilisant une approche d'échantillonnage,
+<br><br>
+Dans un contexte bayésien, le MCMC permet d'échantillonner à partir d'une distribution postérieure. Autrement dit, la distribution postérieure de chaque paramètre estimé dans un contexte bayésien peut entre autre être obtenue par cette méthode d'échantillonnage.
+<br><br>
+Sous certaines conditions, les valeurs échantillonnées représenteront la distribution postérieure de chaque paramètre. 
+
+### Échantillonnage des chaînes
+
+L'échantillonnage par MCMC se fait de façon séquentielle, *i.e.* que les valeurs seront échantillonnées les unes à la suite des autres. Dans bien des cas, les valeurs actuelles seront dépendentes (corrélées) des valeurs précédentes. On peut parler ici de chaînes pour désigner l'ensemble des valeurs échantillonnées de façon séquentielle.
+<br><br>
+Pour démarrer chaque chaîne, il faut d'abord sélectionner une valeur de départ pour chaque paramètre estimé. Cette valeur de départ peut potentiellement être très loin d'une valeur probable.
+<br><br>
+Éventuellement, les chaînes vont s'éloigner de ces valeurs de départ pour converger vers les distributions postérieures. À ce moment, on dira que l'échantillonnage se fait véritablement à partir des distributions postérieures.
+<br>
+```{r,fig.height=4,fig.width=4.5}
+plot(m)
+```
+
+### Convergence des chaînes
+
+Avec les analyses bayésiennes où les paramètres sont estimés par MCMC, il faut donc vérifier la convergence des chaînes pour s'assurer que les valeurs échantillonnées représentent bien les distributions postérieures. 
+<br><br>
+On élimine souvent une certaine portion du début des chaînes pour enlever les valeurs échantillonnées, alors que les chaînes n'ont pas convergées. On parle souvent de *burnin* pous désigner cette partie des chaînes.
+<br><br>
+Il est également très fréquent d'utiliser plusieurs chaînes (3-4) pour un même paramètre ce qui permet de s'assurer que les chaînes ont toutes convergées en vérifiant qu'elles ont toutes convergées au même endroit. En général, on choisira des valeurs de départ différentes pour chacune des chaînes.
+<br><br>
+On peut vérifier la convergence des chaînes avec entre autres le `Rhat` (*potential scale reduction statistic* ou *Gelman-Rubin statistic*). Intuitivement, pour un paramètre donné, cette valeur compare la variance inter-chaîne à la variance intra-chaîne pour évaluer si les chaînes ont convergé au même endroit. Si c'est le cas, le `Rhat` sera très près de 1 (`Rhat` <= 1.01)
+<br>
+```{r}
+summary(m)
+```
+
+## Priors
+
+L'utilisation de *priors* est souvent vue comme étant la partie la plus controversée des statistiques bayésiennes. Qu'en pensez-vous?
+<br><br>
+Idéalement, il faut toujours avoir une petite idée de l'influence des *priors* sur l'analyses. Pour cela il est bien de comparer les distributions postérieures aux *priors*. On peut également faire dans certains cas des analyses de sensibilité pour quantifier cette influence.
+<br><br>
+Plus on a de données, moins les *priors* auront d'influence sur l'estimation des paramètres.
+
+### Types de *priors*
+
+- Informatif: basé sur la théorie, reflète les connaissances.
+
+- Non-informatif: reflète l'absence de connaissances ou le désir de ne pas influencer les résultats.
+
+- Plat (*flat*): similaire à non-informatif.
+
+- Légèrement informatif (*weaky informative*): la théorie n'est pas assez développée pour utiliser des *priors* informatifs, mais assez pour savoir que certaines valeurs ne sont pas probables.
+
+- Par défaut: valeurs par défaut utilisées par les logiciels ou les packages.
+
+- Régularisant (*regularizing*): permet de circonscrire les valeurs obtenues et de pénaliser les valeurs élevées dans un contexte prédictif.
+
+- Etc.
+
+<br>
+
+Voir notamment [Lemoine 2019](https://doi.org/10.1111/oik.05985) et [Banner et al. 2020](https://doi.org/10.1111/2041-210X.13407) pour une discussion sur l'utilisation des priors en écologie.
+
+
+### Quels *priors* utiliser?
+
+Il faut aussi sélectionner une distribution approriée pour représenter nos *priors* et les distributions utilisées doivent être appropriées pour un paramètre donnée. Le groupe qui travaille sur la plateforme [STAN](https://mc-stan.org/) a plusieurs recommandations de *priors* à utiliser dépendemment du contexte (*priors* pour des pentes, *priors* pour des variances, *priors* pour des variances dans un contexte de modèles hiérarchiques, etc.)
+<br>
+
+Voir [Prior Choice Recommendations](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations) pour des recommandations.
+
+
+### Attention aux *priors* "non-informatifs"!
+
+Les *priors* non-informatifs ne le sont pas toujours sous l'échelle du paramètre. Par exemple, si vous tentez d'estimer une probabilité et que vous utiliser une distribution normale comme *prior* pour l'intercept du modèle, il se peut que ce *prior* soit très informatif sous l'échelle du prédicteur linéaire qui est relié à la probabilité par une fonction logit. Supposons un glm binomial avec seulement un intercept.
+<br><br>
+$$ y \sim \mathcal{Binom}(1,p) = \mathcal{Bernoulli}(p)$$
+<br>
+$$ logit(p) = log\left(\frac{p}{1-p}\right) = \beta_{0} $$
+<br>
+$$ \beta_{0} \sim \mathcal{N}(0,10) $$
+<br>
+
+### Attention aux *priors* "non-informatifs"!
+```{r,fig.height=4,fig.width=8,}
+n<-10000
+x<-rnorm(n,0,10)
+par(mfrow=c(1,2))
+hist(x,breaks=50,main="Valeurs a priori de l'intercept")
+hist(exp(x)/(1+exp(x)),breaks=50,main="Lorsque converties en probabilité")
+
+```
+<br>
+Autrement dit, le *prior* est très informatif et pousse les valeurs vers des probabilitées extrêmes!
+
+
+### Étudier ses priors
+
+*prior predictive distribution*
+
+Permet de visualiser l'effet des priors sur l'échelle de la réponse.
+```{r, message = FALSE,tidy = FALSE, warning = FALSE, results = 'hide'}
+
+m2 <- update(m, sample_prior = "only")
+
+```
+
+
+```{r, message = FALSE,tidy = FALSE, warning = FALSE}
+newdata <- data.frame(x = seq(min(d$x), max(d$x), length.out = 100))
+
+pp <- posterior_epred(m2, newdata, ndraws = 500)
+
+plot(d$x, d$y, ylim = range(c(pp, d$y)), pch = 16, col = gray(0, 0.35)) 
+lapply(1:nrow(pp), function(i){
+  lines(newdata$x, pp[i, ], col = adjustcolor("black", 0.05))
+}) |> invisible()
+
+```
+
+#### Avec un *prior* aberrant
+```{r, message = FALSE,tidy = FALSE, results = 'hide'}
+
+newdata <- data.frame(x = seq(min(d$x), max(d$x), length.out = 100))
+
+m3 <- update(m, 
+        sample_prior = "only",
+        prior = c(
+           set_prior("normal(50,20)", class = "b", coef="x"),
+           set_prior("normal(0,50)", class = "Intercept"),
+           set_prior("gamma(2,0.1)", class = "sigma")
+        ),
+      )
+```
+
+
+```{r, message = FALSE,tidy = FALSE}
+pp <- posterior_epred(m3, newdata, ndraws = 500)
+
+plot(d$x, d$y, ylim = range(c(pp, d$y)), pch = 16, col = gray(0, 0.35)) 
+lapply(1:nrow(pp), function(i){
+  lines(newdata$x, pp[i, ], col = adjustcolor("black", 0.05))
+}) |> invisible()
+
+```
+
+#### Avec un modèle binomial
+```{r, message = FALSE,tidy = FALSE, results = 'hide'}
+
+logit <- function(p) {
+  log(p / (1 - p))
+}
+
+inv.logit <- function(x) {
+   exp(x) / (1 + exp(x))  
+}
+
+n <- 200
+x <- runif(n, 0, 10)
+z <- -2 + 0.5 * x
+y <- rbinom(n, size = 1, prob = inv.logit(z))
+
+d<-data.frame(y,x)
+
+m <- brm(y ~ x,
+       data = d,
+       cores = 3,
+       chains = 3,
+       family = "bernoulli",
+       prior = c(
+         set_prior("normal(0,5)", class = "b", coef="x"),
+         set_prior("normal(0,5)", class = "Intercept")
+       )
+     )
+```
+
+
+#### Distribution postérieure des prédictions
+```{r, message = FALSE,tidy = FALSE}
+newdata <- data.frame(x = seq(min(d$x), max(d$x), length.out = 100))
+
+pp <- posterior_epred(m, newdata, ndraws = 500)
+
+plot(d$x, d$y, ylim = range(c(pp, d$y)), pch = 16, col = gray(0, 0.35)) 
+lapply(1:nrow(pp), function(i){
+  lines(newdata$x, pp[i, ], col = adjustcolor("black", 0.05))
+}) |> invisible()
+
+
+```
+
+
+#### Ce qu'indique notre *prior*
+```{r, message = FALSE, tidy = FALSE, results = 'hide'}
+
+m2 <- update(m, sample_prior = "only")
+```
+
+
+```{r, message = FALSE, tidy = FALSE}
+pp <- posterior_epred(m2, newdata, ndraws = 500)
+
+plot(d$x, d$y, ylim = range(c(pp, d$y)), pch = 16, col = gray(0, 0.35)) 
+lapply(1:nrow(pp), function(i){
+  lines(newdata$x, pp[i, ], col = adjustcolor("black", 0.05))
+}) |> invisible()
+```
+
+
+#### Prédiction pour `x = 2`
+```{r, message = FALSE,tidy = FALSE}
+pp <- posterior_epred(m2, data.frame(x = 2), ndraws = 500)
+hist(pp, breaks = 50)
+```
+
+
+### Un *prior* plus raisonnable?
+```{r, message = FALSE,tidy = FALSE, results = 'hide'}
+
+m3 <- update(m,
+       sample_prior = "only",       
+       prior = c(
+         set_prior("normal(0,1)", class = "b", coef="x"),
+         set_prior("normal(0,1)", class = "Intercept")
+       )
+     )
+```
+
+
+```{r, message = FALSE, tidy = FALSE}
+pp <- posterior_epred(m3, newdata, ndraws = 500)
+
+plot(d$x, d$y, ylim = range(c(pp, d$y)), pch = 16, col = gray(0, 0.35)) 
+lapply(1:nrow(pp), function(i){
+  lines(newdata$x, pp[i, ], col = adjustcolor("black", 0.05))
+}) |> invisible()
+```
+
+
+## Recommandations sur les priors
+
+[**Prior Choice Recommendations**](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations) Recommandation par les développeurs de STAN
+
+[**Moving beyond noninformative priors: why and how to choose weakly informative priors in Bayesian analyses**](https://doi.org/10.1111/oik.05985)
+
+[**The use of Bayesian priors in Ecology: The good, the bad and the not great**]( https://doi.org/10.1111/2041-210X.13407)
+
+[**Choosing priors in Bayesian ecological models by simulating from the prior predictive distribution**]( https://doi.org/10.1002/ecs2.3739)
+
+
+## Outils
+
+Il existe plusieurs outils pour faire des modèles bayésiens.
+<br><br>
+
+[**WinBUGS**](https://www.mrc-bsu.cam.ac.uk/software/bugs/the-bugs-project-winbugs/) Un des premiers outils, mais un peu lent
+<br><br>
+[**JAGS**](https://sourceforge.net/projects/mcmc-jags/files/Manuals/) Similaire à BUGS, mais un peu plus rapide
+<br><br>
+[**STAN**](https://mc-stan.org/) Rapide et bien documenté
+<br><br>
+[**Nimble**](https://r-nimble.org/) Relativement nouveau
+<br><br>
+[**MCMCglmm**](https://CRAN.R-project.org/package=MCMCglmm) Modèle animal?
+<br><br>
+[**brms**](https://CRAN.R-project.org/package=brms) Facile d'utilisation et basé sur STAN
+<br><br>
+[**INLA**](https://www.r-inla.org/) Modèles spatiaux
+
 
 
 
