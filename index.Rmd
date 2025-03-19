@@ -90,7 +90,7 @@ h1.title {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  margin-top: 100vh;
+  margin-top: 5vh;
   padding-top: 20px;
   padding-bottom: 50px;
   color: DarkGreen;
@@ -2479,7 +2479,7 @@ legend("top", inset = c(0, -0.12), bty = "n", ncol = 2, legend = c("lm [ y ~ x *
 <br><br>
 <p style='text-align: center'>**La GLMM FAQ!**</p>
 <br>
-<p style='text-align: center'>[https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html](https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html)</p>
+<p style='text-align: center'>[https://bb.olker.github.io/mixedmodels-misc/glmmFAQ.html](https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html)</p>
 
 
 # 3. Vraisemblance et statistiques bayésiennes
