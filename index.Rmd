@@ -13,6 +13,8 @@ output:
     toc_float:
       collapsed: yes
       smooth_scroll: no
+editor_options: 
+  chunk_output_type: console
 ---
 
 <script>
@@ -32,11 +34,11 @@ output:
 pre.r {
     background-color: #EEEEEE;
     border-color: #DDDDDD;
-    font-size: 14pt;
+    font-size: 12pt;
 }
 
 pre code {
-  font-size: 11pt;
+  font-size: 12pt;
 }
 
 body {
@@ -48,9 +50,9 @@ body {
 }
 
 #TOC {
-  font-size: 12pt;
+  font-size: 8pt;
   border-color: white;
-  max-width: 600px;
+  max-width: 12vw;
 }
 
 .list-group-item.active:focus{
@@ -88,30 +90,12 @@ h1.title {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  padding-top: 800px;
-  padding-bottom: 100px;
+  margin-top: 100vh;
+  padding-top: 20px;
+  padding-bottom: 50px;
   color: DarkGreen;
   font-weight: bold;
-}
-
-h1 {
-  font-size: 42px;
-}
-
-h2 {
-  font-size: 36px;
-}
-
-h3 {
-  font-size: 32px;
-}
-
-h4 {
-  font-size: 28px;
-}
-
-h5 {
-  font-size: 26px;
+  font-size: 25px;
 }
 
 .pres { /* write {.pres} next to each section to apply css  */
@@ -130,7 +114,7 @@ options(width=150)
 <br>
 
 
-# 1. Stats de base et modèles linéaires
+# 1. Stats de base, modèles linéaires, GLM
 
 
 ## Distribution statistique
@@ -186,7 +170,7 @@ polygon(c(v[v>=6 & v<=8],8,6), c(y[v>=6 & v<=8],0,0),col=alpha("red",0.5),border
 
 ```
 
-L'aire sous la courbe est de 1 et la proportion de cette surface en rouge représente la probabilité d'obtenir une valeur entre 6 et 8 avec une moyenne de $\mu = 5$ et un écart-type de $\sigma = 2$. On peut estimer cette probabilité avec la fonction `pnorm` intégrée à R. Ce type de fonction est intégré pour plusieurs distribution statistique (voir `?Distributions`).
+L'aire sous la courbe est de 1 et la proportion de la surface en rouge représente la probabilité d'obtenir une valeur entre 6 et 8 avec une moyenne de $\mu = 5$ et un écart-type de $\sigma = 2$. On peut estimer cette probabilité avec la fonction `pnorm` intégrée à R. Ce type de fonction est intégré pour plusieurs distribution statistique (voir `?Distributions`).
 
 
 ##### Probabilité d'obtenir une valeur? 
@@ -285,7 +269,7 @@ L'écart-type de ces moyennes correspond à l'erreur-type estimée à partir d'u
 
 <br>
 
-Le concept d'erreur-type s'applique aussi à d'autres paramètres estimés et pas seulement à la moyenne.  
+Le concept d'erreur-type s'applique aussi à d'autres paramètres estimés et non seulement à la moyenne.  
 
 <br>
 
@@ -346,8 +330,8 @@ Un exemple avec le test de $t$ et une population fictive.
 
 set.seed(1)
 n<-10000
-pop1<-rnorm(n,20,3) # population fictive de n indoividus avec une moyenne de 20
-pop2<-rnorm(n,21,3) # population fictive de n indoividus avec une moyenne de 21
+pop1<-rnorm(n,20,3) # population fictive de n individus avec une moyenne de 20
+pop2<-rnorm(n,21,3) # population fictive de n individus avec une moyenne de 21
 
 ech1<-sample(pop1,10) # échantillon de 10 individus de chaque population
 ech2<-sample(pop2,10)
@@ -367,6 +351,9 @@ v<-seq(-5,15,by=0.01)
 y<-dt(v,test$parameter)
 polygon(c(v[v<=test$statistic],test$statistic,min(v)), c(y[v<=test$statistic],0,0),col=alpha("red",0.5),border=NA)
 polygon(c(v[v>=abs(test$statistic)],max(v),abs(test$statistic)), c(y[v>=abs(test$statistic)],0,0),col=alpha("red",0.5),border=NA)
+abline(v=rep(test$statistic,2)*c(1,-1),lwd=2,lty=3,col="red")
+
+
 
 ```
 
@@ -378,14 +365,17 @@ Reprenons le test de $t$ précédent, mais cette fois, prenons nos échantillons
 
 nreps<-1000
 
-tvalue<-sapply(1:nreps,function(i){
+pvalue<-sapply(1:nreps,function(i){
   ech1<-sample(pop1,5) 
   ech2<-sample(pop1,5)
   test<-t.test(ech1,ech2)
-  test$statistic
+  test$p.value#statistic
 })
 
-hist(tvalue,breaks=50)
+hist(pvalue,breaks=50)
+abline(v=0.05,col="red",lwd=2,lty=3)
+sum(pvalue<=0.05)/length(pvalue)
+
 
 ```
 
@@ -421,7 +411,7 @@ $y$ = observations
 
 $\mu$ = prédicteur linéaire
 
-On a donc un modèle représentant le lien entre nos variables et on cherche à estimer les **paramètres** de ce modèles à l'aide de données.
+On a donc un modèle représentant le lien entre nos variables et on cherche à estimer les **paramètres** de ce modèle à l'aide de données.
 
 ### Suppositions de bases
 
@@ -450,7 +440,7 @@ Quelles sont les suppositions de bases d'un modèle linéaire tel que celui pré
 
 ```{r}
 # nb d'observations
-n<-200
+n<-75
 
 # valeurs fictives des variables explicatives selon une distribution uniforme
 x1<-runif(n,0,100)
@@ -501,6 +491,8 @@ La fonction `summary` est la plus utile pour extraire l'information d'un modèle
 ```{r}
 summary(m)
 ```
+
+<!--
 
 ##### Résidus
 
@@ -570,6 +562,7 @@ summary(m)
 
 `Residual standard error` représente la variance résiduelle ou la variance non-expliquée par le modèle. Remarquez que cette valeur n'est pas très différente de la valeur de 5 qui a été utilisée pour simuler le modèle.
 
+-->
 
 #### Vérification des suppositions de bases
 
@@ -600,7 +593,7 @@ qqline(resid(m))
 
 ```{r}
 
-# simulations d'un facteur
+# simulation d'un facteur
 d$fac<-factor(sample(c("A","B","C"),nrow(d),replace=TRUE))
 d$y<-d$y+2*as.integer(d$fac)-1
 
@@ -623,7 +616,7 @@ plot(d$y,predict(m))
 ```
 
 
-### Soumettre de nouvelle valeurs à `predict`
+### Soumettre de nouvelles valeurs à `predict`
 
 Plus souvent, on veut illustrer l'effet de nos variables et pour cela, il faut soumettre des valeurs à la fonction `predict`. Cette fonction est très utile lorsque l'on veut un maximum de contrôle sur les valeurs à prédire.
 
@@ -654,11 +647,11 @@ visreg(m)
 
 Le package [ggeffects](https://strengejacke.github.io/ggeffects/index.html) permet également d'illustrer les prédictions d'un modèle, mais ce package se base sur l'utilisation du package [ggplot2](https://ggplot2.tidyverse.org/) pour construire les graphiques. Le principe demeure le même: en arrière-plan la fonction `predict` est utilisée. On peut également combiner les différents graphiques générés en utilisant le package [patchwork](https://patchwork.data-imaginist.com/index.html) et sa fonction `wrap_plots`.
 
-```{r,fig.width=8,fig.height=8}
+```{r,fig.width=8,fig.height=6,message=FALSE}
 library(ggeffects)
 library(patchwork)
 g<-ggpredict(m)
-p<-plot(g,add.data=TRUE,jitter=FALSE)
+p<-plot(g,add.data=TRUE)
 wrap_plots(p)
 
 ```
@@ -670,7 +663,7 @@ Dans vos mots, qu'est-ce qu'une interaction?
 
 <br>
 
-C'est lorsque l'effet d'une variable dépend des valeurs d'une autre variable (ou de plusieurs).
+<!-- C'est lorsque l'effet d'une variable dépend des valeurs d'une autre variable (ou de plusieurs). -->
 
 
 #### Un exemple
@@ -701,9 +694,9 @@ Une valeur de p significative c'est bien beau, mais ce qui importe vraiment c'es
 
 ##### Interactions avec `ggeffects`
 
-```{r}
+```{r,message=FALSE}
 
-g<-ggpredict(m,terms=c("x1","fac"))
+g<-ggpredict(m,terms=c("x1","fac"),message=FALSE)
 plot(g,add.data=TRUE,jitter=FALSE)
 
 ```
@@ -792,7 +785,7 @@ hist(unlist(p),breaks=seq(0,1,by=0.05),xlab="Valeurs de p")
 
 * Sous l'hypothèse nulle, les valeurs de p sont distribuées uniformément entre 0 et 1.
 
-
+<!--
 
 ## Extensions
 
@@ -814,8 +807,9 @@ Quelles sont les suppositions de bases qui sont susceptibles de ne pas être ren
 
 À voir au prochain cours!
 
+-->
 
-# 2. Modèles linéaires généralisés et extensions
+<!-- # 2. Modèles linéaires généralisés et extensions -->
 
 ## Modèles linéaires standards
 
@@ -830,6 +824,10 @@ $$y \sim \mathcal{N}(\beta\mathbf{X}, \mathbf{I}\sigma^2)$$
 
 <br>
 
+$\beta$ est un vecteur de coefficients.
+
+$\mathbf{X}$ est une matrice avec les valeurs des variables explicatives.
+
 $\mathbf{I}$ est une matrice identité qui a pour effet d'assigner une variance égale $\sigma^2$ à toutes les observations.
 
 
@@ -837,7 +835,7 @@ $\mathbf{I}$ est une matrice identité qui a pour effet d'assigner une variance 
 
 $$y \sim \mathcal{N}(\beta\mathbf{X}, \mathbf{\Sigma})$$
 
-$\mathbf{\Sigma}$ est une matrice de variance-covariance qui permet beaucoup plus de flexibilité en terme de variance et de dépendence entre les observations. En général, des paramètres seront associés à la matrice $\mathbf{\Sigma}$ pour permettre différentes situations. Dans le cas d'un modèle linéaire standard, on a $\mathbf{\Sigma} = \mathbf{I}\sigma^2$. 
+$\mathbf{\Sigma}$ est une matrice de variance-covariance qui permet beaucoup plus de flexibilité en terme de variance et de dépendance entre les observations. En général, des paramètres seront associés à la matrice $\mathbf{\Sigma}$ pour permettre différentes situations. Dans le cas d'un modèle linéaire standard, on a $\mathbf{\Sigma} = \mathbf{I}\sigma^2$. 
 
 <br>
 
@@ -881,7 +879,7 @@ $$ y \sim \mathcal{ExpFam}(\theta) $$
 
 <br>
 
-Les observations $y$ suivent une distribution particulière appartenant à la famille des distributions exponentielles avec des paramètres $\theta$. La distributions normale, de Poisson, Binomiale et Gamma font parties de la famille des distributions exponentielles.
+Les observations $y$ suivent une distribution particulière appartenant à la famille des distributions exponentielles avec des paramètres $\theta$. La distributions normale, de Poisson, Binomiale et Gamma font partie de la famille des distributions exponentielles.
 
 
 ### Fonction de lien
@@ -894,7 +892,7 @@ La fonction de lien (*link function*) est une transformation qui permet de relie
 
 <br>
 
-C'est ce qui permet de relier les variables explicatives à la variable réponse. Pour chaque distribution qui pourrait être utilisée dans de cadre d'un GLM, une fonction de lien dite canonique est utilisée par défaut, mais il existe plusieurs fonctions de liens possibles.
+C'est ce qui permet de relier les variables explicatives à la variable réponse. Pour chaque distribution qui pourrait être utilisée dans le cadre d'un GLM, une fonction de lien dite canonique est utilisée par défaut, mais il existe plusieurs fonctions de liens possibles.
 
 
 
@@ -924,7 +922,7 @@ Cette distribution a la propriété que $\lambda = E(y) = Var(y)$. Autrement dit
 
 #### D'où provient-elle?
 
-Simulons une distribution de Poisson en distribuant aléatoirement des observations dans un carré 10 x 10. Ensuite, divisons ce carré en 100 cellules.
+Simulons une distribution de Poisson en distribuant aléatoirement 200 observations dans un carré 10 x 10. Ensuite, divisons ce carré en 100 cellules.
 
 ```{r, message=FALSE}
 
@@ -1025,7 +1023,7 @@ $$ log(5) =  1.609438 $$
 
 #### `ggeffects`
 
-```{r}
+```{r,message=FALSE}
 
 g<-ggpredict(m,terms=c("x [n=50]"))
 plot(g,add.data=TRUE,jitter=FALSE)
@@ -1101,7 +1099,7 @@ Si le modèle est appropré pour les données, on devrait voir ici une distribut
 
 ##### Autres vérifications
 
-Les problèmes de sous- ou sur- dispersion et de surabondance de 0 (*zéro-inflation*) sont très fréquents avec les GLM. Ces deux fonctions de DHARMa permettent d'évaluer si les observations réelles diffèrent des observations simulées en terme de présence de 0 ou de disperison. En rouge, ce sont les observations réelles et en gris les observations simulées. Si les observations réelles sont bien en dehors des observations simulées, C'est qu'il y a un problème avec le modèle et il faut un ajustment.
+Les problèmes de sous- ou sur- dispersion et de surabondance de 0 (*zéro-inflation*) sont très fréquents avec les GLM. Ces deux fonctions de DHARMa permettent d'évaluer si les observations réelles diffèrent des observations simulées en terme de présence de 0 ou de dispersion. En rouge, ce sont les observations réelles et en gris les observations simulées. Si les observations réelles sont bien en dehors des observations simulées, c'est qu'il y a un problème avec le modèle et il faut un ajustment.
 
 ```{r,message=FALSE,fig.height=5,results='hide',fig.keep='all'}
 
@@ -1123,7 +1121,7 @@ $$ logit(p) = log\left(\frac{p}{1-p}\right) = \eta = \beta_0 + \beta_1 x_1 + \be
 
 $$ y \sim \mathcal{Binom}(1,p) = \mathcal{Bernoulli}(p)$$
 
-La distribution de Bernoulli est un cas particulier de la distribiution binomiale avec un tirage (e.g. un individu est vivant ou mort, un individu est mâle ou femelle, etc.)
+La distribution de Bernoulli est un cas particulier de la distribution binomiale avec un tirage (e.g. un individu est vivant ou mort, un individu est mâle ou femelle, etc.)
 
 
 ### Distribution binomiale
@@ -1144,14 +1142,14 @@ Cette fonction permet de calculer la probabilité d’observer $k$ succès si $n
 
 <br>
 
-Cette distribution a la propriété que $E(y) = np$ et $Var(y) = np(1-p)$ , autrement dit, la moyenne et la variance sont entièrement détemrinées par la propbabilité de succès et par le nombre de tirages. On a donc une autre distribution assez restrictive.
+Cette distribution a la propriété que $E(y) = np$ et $Var(y) = np(1-p)$ , autrement dit, la moyenne et la variance sont entièrement déterminées par la probabilité de succès et par le nombre de tirages. On a donc une autre distribution assez restrictive.
 
 
 #### Exemple
 
 Supposons qu'on tire pile (0) ou face (1) 10 fois et qu'on calcule le nombre de face et qu'on répète cette exercice 500 fois. Quelle sera la distribution du nombre de faces obtenus?
 
-```{r, fig.height=4,fig.width=4}
+```{r, fig.height=5,fig.width=5}
 
 n<-500
 co<-sapply(1:n,function(i){
@@ -1212,7 +1210,7 @@ $$ log\left(\frac{p}{1-p}\right) = log\left(\frac{0.5}{1-0.5}\right) = log(1) = 
 
 Avec `ggeffects`
 
-```{r}
+```{r,message=FALSE}
 
 g<-ggpredict(m,terms=c("x [n=50]"))
 plot(g,add.data=TRUE)
@@ -1245,7 +1243,7 @@ C'est lorsque les données sont plus variables que ce qui est attendu par le mod
 
 <br>
 
-En général, une surdisperion ignorée fera en sorte que l'incertitude sera sous-estimée (trop de confiance dans nos résultats).
+En général, une surdispersion ignorée fera en sorte que l'incertitude sera sous-estimée (trop de confiance dans nos résultats).
 
 <br>
 
@@ -1266,7 +1264,7 @@ Binomiale -> Béta binomiale (`glmmTMB`, `brms`, etc.)
 
 Voici un exemple de GLM de Poisson avec de la surdispersion. Pour créer cette surdispersion, j'utilise une distribution négative binomiale pour générer les observations au lieu d'une distribution de Poisson. 
 
-```{r,fig.width=6,fig.height=5}
+```{r,fig.width=6,fig.height=5,message=FALSE}
 
 n<-100
 x<-runif(n,0,10)
@@ -1385,7 +1383,7 @@ Ex.: proportion d'une surface affectée, proportion de temps passé en alimentat
 
 Voir [Douma & Weedon 2019](https://doi.org/10.1111/2041-210X.13234)
 
-
+<!-- 
 
 ## Modèles généraux additifs (GAM)
 
@@ -1531,6 +1529,7 @@ lines(d$x,mm%*%m$coefficients)
 
 <!-- One might ask, why use piecewise polynomial instead of a high degree polynomial fitted to the whole data? High degree polynomials can lead to unwanted oscillations, notably at the edges of predictions. For example, see [Runge's phenomenon](https://en.wikipedia.org/wiki/Runge%27s_phenomenon).   -->
 
+<!--
 
 #### Pourquoi ?
 
@@ -1557,6 +1556,9 @@ Le package `mgcv` est très bien documenté et son fichier d'aide contient beauc
  
 `?mgcv.FAQ`  questions fréquemment posées
 
+-->
+
+<!--
 
 # 3. Sélection de modèles
 
@@ -2076,7 +2078,411 @@ All families available in GLMs are also available in GAMs and others are also av
 
 -->
 
-# 4. Vraisemblance et statistiques bayésiennes
+# 2. Modèles mixtes/hiérarchiques
+
+<br><br>
+$$ y = \alpha + \beta x + \epsilon $$
+
+$$ \epsilon \sim \text{Normale}(0,\sigma^{2}) $$
+<br>
+<p style='text-align: center'>ou</p>
+<br>
+$$ \mu = \alpha + \beta x $$
+
+$$ y \sim \text{Normale}(\mu,\sigma^{2}) $$
+
+
+## Modèle linéaire hiérarchique simple
+
+<br><br>
+$$ y_{ij} = \alpha + \beta x_{ij} + \tau_{i} + \epsilon_{ij}$$
+
+$$ \tau_{i} \sim \text{Normale}(0,\,\sigma_{\tau}^{2}) $$
+
+$$ \epsilon_{ij} \sim \text{Normale}(0,\sigma_{\epsilon}^{2})\ $$
+
+<br><br>
+<p style='text-align: center'>où il y a $i$ groupes et $j$ observations par groupe</p>
+
+## Autre formulation
+
+<br><br>
+$$ \mu_{ij} = \alpha_{i} + \beta x_{ij}$$
+
+$$ \alpha_{i} \sim \text{Normale}(\alpha,\,\sigma_{\alpha}^{2})\ $$
+
+$$ y_{ij} \sim \text{Normale}(\mu_{ij},\,\sigma_{\epsilon}^{2})\ $$
+<br><br>
+<p style='text-align: center'>Un modèle est dit hiérarchique lorsque certains de ses paramètres sont définis par une distribution de probabilité.</p>
+
+```{r, eval = FALSE, include = FALSE, message = FALSE, warning = FALSE}
+library(lme4)
+library(ggeffects)
+
+
+set.seed(1234)
+ng<-50 # nb de groupes
+nobs<-50 # nb d'observations par groupe
+n <- ng * nobs
+id <- gl(ng, nobs)
+
+# valeurs fictives des variables explicatives selon une distribution uniforme
+x1 <- runif(n, 0, 100)
+x2 <- runif(n, 0, 10)
+x3 <- runif(n, 0, 1)
+
+# valeurs des paramètres beta
+b0 <- 100
+b1 <- 0.2
+b2 <- 1
+b3 <- -10
+
+reb0 <- rep(rnorm(ng, 0, 15), each = nobs)
+reb1 <- rep(rnorm(ng, 0, 0.25), each = nobs)
+reb2 <- rep(rnorm(ng, 0, 0.01), each = nobs)
+reb3 <- rep(rnorm(ng, 0, 1), each = nobs)
+
+# prédicteur linéaire
+mu <- (b0 + reb0) + (b1 + reb1) * x1 + (b2 + reb2) * x2 + (b3 + reb3) * x3
+
+# observations à partir d'une distribution normale avec un écart-type de 5
+y <- rnorm(n, mu, 5)
+
+# données
+d <- data.frame(y, x1, x2, x3)
+
+m <- lmer(y ~ x1 + x2 + x3 + (1 | id), data = d)
+
+g <- ggpredict(m, terms = c("x1", "id [sample=20]"), type = "random")
+plot(g, add.data = TRUE, show_ci = FALSE, colors = rep("black", 20), show_legend = FALSE)
+
+m <- lmer(y ~ x1 + x2 + x3 + (x1 | id), data = d)
+
+g <- ggpredict(m, terms = c("x1", "id [sample=20]"), type = "random")
+plot(g, add.data = TRUE, show_ci = FALSE, colors = rep("black",20), show_legend = FALSE)
+
+```
+
+## Simulons un exemple
+
+```{r, message = FALSE, warning = FALSE}
+
+set.seed(12345)
+ng <- 20
+nobs <- 10
+n <- ng * nobs
+id <- gl(ng, nobs)
+
+# valeurs fictives des variables explicatives selon une distribution uniforme
+x <- runif(n, 0, 100)
+
+# valeurs des paramètres
+a <- 100
+b <- 1
+
+# on génère l'effet aléatoire pour chaque groupe
+rea <- rep(rnorm(ng, 0, 20), each = nobs)
+
+# prédicteur linéaire 
+mu <- (a + rea) + b * x
+
+# observations à partir d'une distribution normale avec un écart-type de 5
+y <- rnorm(n, mu, 5)
+
+# données
+d <- data.frame(y, x)
+
+```
+
+## Illustrons le modèle
+
+```{r, message = FALSE, warning = FALSE}
+
+library(lme4)
+library(ggeffects)
+
+m <- lmer(y ~ x + (1|id), data = d)
+
+g <- ggpredict(m, terms = c("x", "id [sample=20]"), type = "random")
+plot(g, add.data = TRUE, show_ci = FALSE, colors = rep("black", 20), show_legend = FALSE)
+
+```
+
+
+## Illustrons les pentes par individus
+
+```{r, message = FALSE, warning = FALSE}
+
+g <- ggpredict(m, terms = c("x", "id [sample=20]"), type = "random")
+plot(g, add.data = TRUE, show_ci = FALSE, colors = sample(colors(), 20))
+
+```
+
+
+## Retrouvons les paramètres
+
+La variance de l'effet aléatoire était de 20² et la variance résiduelle était de 5².
+```{r, message = FALSE, warning = FALSE}
+
+summary(m)
+
+```
+
+## Récupérons ces effets
+
+```{r, message = FALSE, warning = FALSE}
+fixef(m)
+ranef(m)
+apply(ranef(m)$id, 2, sd)
+```
+
+## Coefficients
+
+```{r, message = FALSE, warning = FALSE}
+coef(m)
+```
+
+
+## Complexifions le modèle
+
+```{r, message = FALSE, warning = FALSE}
+b
+
+reb <- rep(rnorm(ng, 0, 0.5), each = nobs)
+
+mu <- (a + rea) + (b + reb) * x
+
+y <- rnorm(n, mu, 5)
+
+d <- data.frame(y, x)
+
+```
+
+
+## Illustrons les pentes
+
+```{r, message = FALSE, warning = FALSE}
+
+m <- lmer(y ~ x + (x|id), data = d)
+
+g <- ggpredict(m, terms = c("x", "id [sample=20]"), type = "random")
+plot(g, add.data = TRUE, show_ci = FALSE, colors = rep("black",20), show_legend = FALSE)
+
+```
+
+
+## Retrouvons les paramètres
+
+La variance de l'effet aléatoire sur la pente était de (0.5)².
+```{r, message = FALSE, warning = FALSE}
+
+summary(m)
+
+```
+
+
+## Récupérons ces effets
+```{r, message = FALSE, warning = FALSE}
+fixef(m)
+ranef(m)
+apply(ranef(m)$id, 2, sd)
+```
+
+
+```{r, message = FALSE, warning = FALSE}
+coef(m)
+```
+
+
+## Formulations
+
+```{r, message = FALSE, warning = FALSE, eval = FALSE}
+
+m <- lmer(y ~ x + (1|id), data = d)
+
+m <- lmer(y ~ x + (x|id), data = d) # équivalent à (1 + x|id)
+
+m <- lmer(y ~ x + (0 + x|id), data = d)
+
+m <- lmer(y ~ x + (1|id) + (0 + x|id), data = d)
+
+```
+
+## Corrélations _intercepts_/pentes
+
+```{r, message = FALSE, warning = FALSE, eval = FALSE}
+
+m <- lmer(y ~ x + (1|id) + (0 + x|id), data = d)
+
+```
+<br>
+Le dernier est équivalent à
+<br>
+```{r, message = FALSE, warning = FALSE, eval = FALSE}
+
+m <- lmer(y ~ x + (x||id), data = d)
+
+```
+<br>
+et signifie qu'on assume que l'_intercept_ et la pente ne sont pas corrélées ou qu'on ne veut pas estimer cette corrélation. En pratique, il n'y a pas énormément de raison de faire cela et par défaut le modèle va estimer cette corrélation.
+
+## Effets aléatoires croisés
+
+Supposons que nous avons des individus observés plusieurs fois par année et ce sur plusieurs années.
+
+```{r, message = FALSE, warning = FALSE, eval = FALSE}
+
+m <- lmer(y ~ x + (1|id) + (1|year), data = d)
+
+```
+
+## Effets aléatoires nichés
+
+Supposons maintenant que les individus sont annuels et qu'ils ne sont observés que pour des années particulières.
+<br>
+```{r, message = FALSE, warning = FALSE, eval = FALSE}
+
+m <- lmer(y ~ x + (1|year/id), data = d)
+
+```
+<br>
+Équivalent à:
+<br>
+```{r, message = FALSE, warning = FALSE, eval = FALSE}
+
+m <- lmer(y ~ x + (1|year) + (1|year:id), data = d)
+
+```
+
+## Quand utiliser les effets aléatoires?
+
+<br>
+
+- Mesures répétées sur certaines unités ou individus
+
+- Les observations sont regroupées sous des structures ou ne sont pas indépendantes
+
+- Il y a de la réplication à plusieurs niveaux de la hiérarchie
+
+- On veut estimer la variance ou généraliser à une population d'unités d'échantillonnage
+
+
+<!--
+## Formulation matricielle
+
+<br><br>
+$$ \mu_{ij} = \alpha_{i} + \beta x_{ij}$$
+
+$$ \alpha_{i} \sim \text{Normale}(\alpha,\,\sigma_{\alpha}^{2})\ $$
+
+$$ \textbf{y} \sim \text{Normale}(\mu_{ij},\,\sigma_{\epsilon}^{2})\ $$
+
+$$\boldsymbol{y} \sim \text{Normale}(\mathbf{\beta}\mathbf{X}, \mathbf{I}\sigma^2)$$
+
+$$\boldsymbol{y} \sim \text{Normale}(\mathbf{\beta}\mathbf{X}, \mathbf{\Sigma})$$
+-->
+
+
+
+## Effet spatial, temporel, phylogénétique
+
+<br>
+Autocorrélation spatiale, temporelle, phylogénétique, etc...
+
+## Régularisation (_shrinkage_)
+
+<br>
+_Complete pooling_
+<br><br>
+_No pooling_
+<br><br>
+_Partial pooling_
+
+## Un exemple
+
+```{r, message = FALSE, warning = FALSE, echo = FALSE}
+
+set.seed(1234) #12345
+ng <- 50
+nobs <- sample(2:10, size = ng, replace = TRUE)
+
+#id <- gl(ng, nobs)
+id <- factor(rep(1:ng, times = nobs), levels = 1:ng)
+n <- length(id)
+
+# valeurs fictives des variables explicatives selon une distribution uniforme
+x <- runif(n, 0, 100)
+
+# valeurs des paramètres
+a <- 100
+b <- 1
+
+# on génère l'effet aléatoire pour chaque groupe
+rea <- rep(rnorm(ng, 0, 20), times = nobs)
+
+reb <- rep(rnorm(ng, 0, 0.5), times = nobs)
+
+mu <- (a + rea) + (b + reb) * x
+
+y <- rnorm(n, mu, 5)
+
+d <- data.frame(id, y, x)
+
+m <- lmer(y ~ x + (x|id), data = d)
+m2 <- lm(y ~ x * id, data = d)
+
+co <- coef(m2)
+co[1:2] <- c(0, 0)
+names(co)[1:2] <- c("id1", "x:id1")
+co <- co[order(names(co))]
+mco <- matrix(co, ncol = 2)
+rownames(mco) <- names(co)[1:(length(co)/2)]
+mco <- mco[order(match(gsub("id", "", rownames(mco)), levels(d$id))), ]
+mco <- mco + matrix(coef(m2)[1:2], ncol = 2)[rep(1, nrow(mco)), ]
+#mco
+
+plot(mco[, 1], mco[, 2], pch = 16, xlab = "Intercept", ylab = "Pente")
+#text(mco[, 1], mco[, 2], labels = unname(table(id)), cex = 0.5, adj = c(0.5, -1))
+points(coef(m)$id[, 1], coef(m)$id[, 2], pch = 1, col = "tomato")
+abline(v = a, lty = 3); abline(h = b, lty = 3)
+
+invisible(lapply(1:nrow(mco), function(i){
+  lines(c(mco[i, 1], coef(m)$id[i, 1]), c(mco[i, 2], coef(m)$id[i, 2]), col = "red")
+}))
+
+legend("top", inset = c(0, -0.12), bty = "n", ncol = 2, legend = c("lm [ y ~ x * id ]", "lmer [ y ~ x + (x | id) ]"), pch = c(16, 1), col = c("black", "red"), xpd = TRUE)
+
+
+```
+
+## Effet du n
+
+```{r, message = FALSE, warning = FALSE, echo = FALSE}
+
+plot(mco[, 1], mco[, 2], pch = 16, xlab = "Intercept", ylab = "Pente")
+text(mco[, 1], mco[, 2], labels = unname(table(id)), cex = 1, adj = c(0.5, -1))
+points(coef(m)$id[, 1], coef(m)$id[, 2], pch = 1, col = "tomato")
+abline(v = a, lty = 3); abline(h = b, lty = 3)
+
+invisible(lapply(1:nrow(mco), function(i){
+  lines(c(mco[i, 1], coef(m)$id[i, 1]), c(mco[i, 2], coef(m)$id[i, 2]), col = "red")
+}))
+
+legend("top", inset = c(0, -0.12), bty = "n", ncol = 2, legend = c("lm [ y ~ x * id ]", "lmer [ y ~ x + (x | id) ]"), pch = c(16, 1), col = c("black", "red"), xpd = TRUE)
+
+```
+
+
+
+## Problèmes, questionnements ?
+
+<br><br>
+<p style='text-align: center'>**La GLMM FAQ!**</p>
+<br>
+<p style='text-align: center'>[https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html](https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html)</p>
+
+
+# 3. Vraisemblance et statistiques bayésiennes
 
 ## Rappel des probabilités
 
@@ -2084,7 +2490,7 @@ Quelle est la probabilité d'obtenir 2 fois pile en tirant une pièce de monnaie
 
 ### Pile ou face
 
-On doit multiplier la probabilité de chaque événement pour obtenir la probabilité combinée de ces deux événements. Si $P(pile) = 0.5$ (*i.e.* la probabilité d'otenir pile), on a:
+On doit multiplier la probabilité de chaque événement pour obtenir la probabilité combinée de ces deux événements. Si $P(pile) = 0.5$ (*i.e.* la probabilité d'obtenir pile), on a:
 
 <br>
 $$P(pile,pile) = P(pile) \times P(pile) = 0.5 \times 0.5 = 0.25$$
@@ -2110,7 +2516,7 @@ prod(dbinom(c(0,0),size=1,p=0.5))
 
 ## Vraisemblance
 
-La vraisemblance (*likelihood*) représente la plausibilité de valeurs de paramètres en fonction de données observées. L'utlisation de la vraisemblance implique l'utilisation de distribution de probablités pour représenter le lien entre les observations et les modèles.
+La vraisemblance (*likelihood*) représente la plausibilité de valeurs de paramètres en fonction de données observées. L'utilisation de la vraisemblance implique l'utilisation de distribution de probabilités pour représenter le lien entre les observations et les modèles.
 <br><br>
 Pour quantifier la vraisemblance, on peut utiliser une fonction de vraisemblance (*likelihood function*).
 <br>
@@ -2137,7 +2543,7 @@ L'idée derrière le maximum de vraisemblance (*maximum likelihood*) est de dét
 <br><br>
 Une grande partie des paramètres que nous estimons sont estimés par la méthode du maximum de vraisemblance. 
 <br>
-Certaines méthodes plus classique comme la miminimisation de la somme des carrés dans la régression standard sont équivalente à la maximisation de la vraisemblance. La sélection de modèles par AIC repose sur l'utilisation du maximum de vraisemblance. 
+Certaines méthodes plus classiques comme la minimisation de la somme des carrés dans la régression standard sont équivalentes à la maximisation de la vraisemblance. La sélection de modèles par AIC repose sur l'utilisation du maximum de vraisemblance. 
 
 
 ### Exemple
@@ -2148,9 +2554,9 @@ Simulons `n = 20` présences/absences avec une probabilité de `p = 0.5`. Ensuit
 ```{r}
 set.seed(123)
 p<-0.5
-y<-rbinom(20,1,0.5)
+y<-rbinom(20,1,p) # tirage aléatoire de 20 valeurs de 0/1 avec une probabilité de 0.5
 
-probs<-seq(0,1,by=0.01)
+probs<-seq(0,1,by=0.01) # valeurs du paramètre qui seront évaluées
 l<-sapply(probs,function(i){
   prod(dbinom(y,size=1,prob=i)) # likelihood
 })
@@ -2162,7 +2568,7 @@ Pour calculer la vraisemblance, on utilise la fonction dbinom qui permet de calc
 
 ### Profil de vraisemblance
 
-On peut par la suite illustrer la vraisemblance d'obtenir les valeurs observées pour les différentes valeurs de `p`. Ceci permet d'illustrer le profile de vraisemblance (*likelihood profile*).
+Par la suite, on peut illustrer la vraisemblance d'obtenir les valeurs observées pour les différentes valeurs de `p`. Ceci permet d'illustrer le profile de vraisemblance (*likelihood profile*).
 
 ```{r}
 plot(probs,l,type="l",ylab="Likelihood",xlab="Valeur du paramètre p")
@@ -2190,7 +2596,7 @@ exp(coef(m))/(1+exp(coef(m)))
 
 ### Intervalle de confiance 
 
-On peut également estimer un intervalle de confiance autour de cette probabilité avec la fonction `confint.` Différentes méthodes existent pour obtenir un intervallede confiance à partir d'un profil de vraisemblance, mais nous n'arboreons pas cela ici (*i.e.* *profile likelihood confidence intervals*).
+On peut également estimer un intervalle de confiance autour de cette probabilité avec la fonction `confint.` Différentes méthodes existent pour obtenir un intervalle de confiance à partir d'un profil de vraisemblance, mais nous n'arborderons pas cela ici (*i.e.* *profile likelihood confidence intervals*).
 <br>
 ```{r}
 ci<-confint(m) # calcul de l'intervalle de confiance sur les coefficients
@@ -2227,7 +2633,7 @@ $$P(\textrm{test positif}|\textrm{infecté})$$
 <br>
 
 
-### Théorème de Bayes
+### Règle de Bayes
 
 Il s'agit simplement d'une règle en théorie des probabilités qui permet de relier des probabilités conditionnelles.
 <br><br>
@@ -2236,12 +2642,12 @@ $$P(A|B) = \frac{P(B|A)P(A)}{P(B)}$$
 
 $P(A)$ veut dire la probbailité de $A$, indépendemment de $B$.
 <br><br>
-$P(A|B)$ veut dire la probabilité de $A$ sachant $B$. C'est une probabilité conditionelle.
+$P(A|B)$ veut dire la probabilité de $A$ sachant $B$. C'est une probabilité conditionnelle.
 
 
 ### Interprétation
 
-Un exemple classique de cette règle est le suivant. Supposons que $P(A)$ désigne la probabilité d'être infecté par la Covid-19 et que $P(B)$ désigne la probabilité de tester positif à un test de Covid-19. Ici, on a aussi $P(A')$ qui est la probabilité de ne pas être infecté.
+Un exemple classique de cette règle est le suivant. Supposons que $P(A)$ désigne la probabilité d'être infecté par la Covid-19 et que $P(B)$ désigne la probabilité de tester positif à un test de Covid-19. Ici, on a aussi $P(A')$ qui est la probabilité de ne pas être infecté et $P(B')$ qui est la probabilité d'un test négatif.
 <br><br>
 Si on a:
 <br>
@@ -2251,7 +2657,7 @@ $P(A') = 1-1/500 = 0.998$: proportion de personnes qui ne sont pas infectées
 
 $P(B|A) = 0.98$: probabilité d'un test positif si une personne est infectée
 
-$P(B|A') = 0.95$: probabilité d'un test négatif si une personne n'est pas infectée
+$P(B|A') = 0.05$: probabilité d'un test positif si une personne n'est pas infectée
 
 $P(B) = P(B|A)P(A) + P(B|A')P(A')$: il faut additionner les possibilités associées au cas où une personne est infectée et au cas où une personne n'est pas infectée. 
 
@@ -2260,10 +2666,10 @@ $P(B) = P(B|A)P(A) + P(B|A')P(A')$: il faut additionner les possibilités associ
 Quelle est la probabilité d'être infecté si on reçoit un test positif (en assumant qu'on se fait tester pour une raison autre que d'avoir des symptômes) ?
 <br>
 
-$$P(A|B) = \frac{P(B|A)P(A)}{P(B|A)P(A)+P(B|A')P(A')} = \frac{0.98 \times 0.002}{0.98 x 0.002 \times (1-0.95) \times 0.998} \approx 0.0378$$
+$$P(A|B) = \frac{P(B|A)P(A)}{P(B|A)P(A)+P(B|A')P(A')} = \frac{0.98 \times 0.002}{(0.98 \times 0.002) + (0.05 \times 0.998)} \approx 0.0378$$
 
 <br>
-Dans ce cas, la probabilité d'avoir réellement la Covid-19 si le test est positif n'est que d'environ 3.8 %
+Dans ce cas fictif, la probabilité d'avoir réellement la Covid-19 si le test est positif n'est que d'environ 3.78 %
 
 
 ## Statistiques bayésiennes
@@ -2289,7 +2695,7 @@ $P(data)$: distribution marginale des données (*marginal likelihood*)
 
 $$P(\theta|data) = \frac{P(data|\theta)P(\theta)}{P(data)}$$
 <br><br>
-La distribution postérieure $P(\theta|data)$ est ce que l'on cherche à estimer. Il s'agit d'une distribution de probabilité qui décrit les probabilités des différentes valeurs possibles du paramètre. Contrairement avec les analyses fréquentistes, on peut directement parler de la probabilité qu'un paramètre soit entre telle et telle valeur.
+La distribution postérieure $P(\theta|data)$ est ce que l'on cherche à estimer. Il s'agit d'une distribution de probabilité qui décrit les probabilités des différentes valeurs possibles du paramètre. Contrairement aux analyses fréquentistes, on peut directement parler de la probabilité qu'un paramètre soit entre telle et telle valeur.
 
 ### Vraisemblance (*likelihood*)
 
@@ -2301,7 +2707,7 @@ Comme vu précédemment, la vraisemblance $P(data|\theta)$ représente la probab
 
 $$P(\theta|data) = \frac{P(data|\theta)P(\theta)}{P(data)}$$
 <br><br>
-Les distributions *a priori* $P(data)$ représentent nos croyances sur les valeurs des paramètres avant de faire les analyses. On les représente à l'aide de distributions de probabilité. Ces croyances représentent ce à quoi on s'attend en termes de valeurs en se basant sur nos connaissances théoriques avant de faire notre expérience.
+Les distributions *a priori* $P(\theta)$ représentent nos croyances ou nos connaissances sur les valeurs des paramètres avant de faire les analyses. On les représente à l'aide de distributions de probabilité. Ces croyances représentent ce à quoi on s'attend en termes de valeurs en se basant sur nos connaissances avant de faire notre expérience.
 
 
 ### Distribution marginale des données
@@ -2310,7 +2716,7 @@ $$P(\theta|data) = \frac{P(data|\theta)P(\theta)}{P(data)} = \frac{P(data|\theta
 <br><br>
 Cette quantité $P(data)$ (*marginal likelihood*) est beaucoup plus difficile à comprendre intuitivement. Elle représente en quelque sorte la probabilité des données pour l'ensemble des valeurs de paramètres possibles (d'où l'intégrale). C'est la distribution marginale des données ou la vraisemblance marginale. Elle permet également de faire en sorte que la distribution postérieure soit une distribution de probabilité (i.e. aire sous la courbe = 1). 
 <br><br>
-Il s'agit d'une constante qui est généralewment très difficile à calculer. Des méthodes comme le MCMC permettent d'éviter de la calculer dans l'obtention de la distribution postérieure.  
+Il s'agit d'une constante qui est généralement très difficile à calculer. Des méthodes comme le MCMC permettent d'éviter de la calculer directement dans l'obtention de la distribution postérieure.  
 
 ### En résumé
 
@@ -2328,7 +2734,7 @@ $$Posterior \propto Likelihood \times Prior$$
 En d'autres mots, la distribution postérieure est proportionnelle à la vraisemblance et aux distributions *a priori*
 
 <br><br>
-On pourrait aussi dire qu'avec une approche bayésienne, on met à jour nos croyances à l'aide de données.
+On pourrait aussi dire qu'avec une approche bayésienne, on met à jour nos croyances ou nos connaissances à l'aide de données.
 
 
 ## Avantages
@@ -2341,9 +2747,9 @@ On pourrait aussi dire qu'avec une approche bayésienne, on met à jour nos croy
 
 - Facilite l'estimation de quantités dérivées (e.g. prédictions ou combinaisons de prédictions)
 
-- Le fait d'avoir à spécifier des priors nous force à comprendre ce que nos paramètres représentent
+- Le fait d'avoir à spécifier des *priors* nous force à comprendre ce que nos paramètres représentent
  
-- Façon de penser plus naturelle, philosophiquement plus satisfaisant? 
+- Façon de penser plus naturelle, philosophiquement plus satisfaisante? 
 
 
 ## Désavantages ?
@@ -2352,9 +2758,9 @@ On pourrait aussi dire qu'avec une approche bayésienne, on met à jour nos croy
 
 - Modèles plus longs à estimer
 
-- Moins de solutions *clés en main*?
+- Moins de solutions clés en main?
 
-- Nécessité de choisir et de justifier des *priors*
+- Nécessité de choisir et de justifier ses *priors*
 
 
 ## Exemple
@@ -2390,7 +2796,8 @@ Par exemple, pour la variance/écart-type du modèle, il faut idéalement un *pr
 
 La façon la plus "clé en main" de faire un modèle bayésien est d'utiliser le package [brms](https://CRAN.R-project.org/package=brms). Ce package permet de spécifier des modèles d'une façon très similaire aux packages fréquemment utilisés comme nlme, lme4, glmmTMB, etc. En arrière-plan, brms utilise le programme [STAN](https://mc-stan.org/) qui est un environnement de programmation pour la modélisation bayésienne.
 <br>
-```{r, message=FALSE,tidy=FALSE}
+
+```{r, message = FALSE, warning = FALSE, tidy = FALSE, results = 'hide'}
 library(brms)
 
 m <- brm(y ~ x,
@@ -2402,11 +2809,38 @@ m <- brm(y ~ x,
          set_prior("normal(0,5)", class = "b", coef="x"),
          set_prior("normal(0,50)", class = "Intercept"),
          set_prior("gamma(2,0.1)", class = "sigma")
-       ),
-       file = "C:/Users/User/Downloads/brm_model"
+       )
      )
 
 ```
+
+
+### Visualisation
+```{r, message = FALSE,tidy = FALSE}
+
+library(ggeffects)
+g <- ggpredict(m, terms = c("x"))
+plot(g, add.data = TRUE)
+
+```
+
+### Distribution postérieure des prédictions
+```{r, message = FALSE,tidy = FALSE}
+
+newdata <- data.frame(x = seq(min(d$x), max(d$x), length.out = 100))
+
+pp <- posterior_epred(m, newdata, ndraws = 500)
+
+plot(d$x, d$y, ylim = range(c(pp, d$y)), pch = 16, col = gray(0, 0.35)) 
+lapply(1:nrow(pp), function(i){
+  lines(newdata$x, pp[i, ], col = adjustcolor("black", 0.05))
+}) |> invisible()
+
+```
+
+
+
+
 
 ### Formulation du modèle
 
@@ -2435,11 +2869,11 @@ Notez encore une fois ici qu'on peut faire une interprétation probabiliste plus
 plot(m)
 ```
 
-Les distributions postérieures des paramètres sont illustrées à gaude. À droite, les chaînes de MCMC sont illustrées (nous y reviendront). <!--Avec les modèles bayésiens, il faut toujours vérifier la convergence des chaînes.-->
+Les distributions postérieures des paramètres sont illustrées à gauche. À droite, les chaînes de MCMC sont illustrées (nous y reviendrons). <!--Avec les modèles bayésiens, il faut toujours vérifier la convergence des chaînes.-->
 
 ## MCMC
 
-Le MCMC (*Markov Chain Monte Carlo*) est une classe d'algorithmes permettant d'échantillonner à partir d'une distribution de probabilité. Il s'agit d'une approche qui permet d'éviter des calculs complexes, voire impossible, en utilisant une approche d'échantillonnage,
+Le MCMC (*Markov Chain Monte Carlo*) est une classe d'algorithmes permettant d'échantillonner à partir d'une distribution de probabilité. Il s'agit d'une approche qui permet d'éviter des calculs complexes, voire impossible, en utilisant une approche d'échantillonnage.
 <br><br>
 Dans un contexte bayésien, le MCMC permet d'échantillonner à partir d'une distribution postérieure. Autrement dit, la distribution postérieure de chaque paramètre estimé dans un contexte bayésien peut entre autre être obtenue par cette méthode d'échantillonnage.
 <br><br>
@@ -2461,11 +2895,11 @@ plot(m)
 
 Avec les analyses bayésiennes où les paramètres sont estimés par MCMC, il faut donc vérifier la convergence des chaînes pour s'assurer que les valeurs échantillonnées représentent bien les distributions postérieures. 
 <br><br>
-On élimine souvent une certaine portion du début des chaînes pour enlever les valeurs échantillonnées, alors que les chaînes n'ont pas convergées. On parle souvent de *burnin* pous désigner cette partie des chaînes.
+On élimine souvent une certaine portion du début des chaînes pour enlever les valeurs échantillonnées, alors que les chaînes n'ont pas convergé. On parle souvent de *burnin* pour désigner cette partie des chaînes.
 <br><br>
-Il est également très fréquent d'utiliser plusieurs chaînes (3-4) pour un même paramètre ce qui permet de s'assurer que les chaînes ont toutes convergées en vérifiant qu'elles ont toutes convergées au même endroit. En général, on choisira des valeurs de départ différentes pour chacune de chaque chaîne.
+Il est également très fréquent d'utiliser plusieurs chaînes (3-4) pour un même paramètre ce qui permet de s'assurer que les chaînes ont toutes convergé au même endroit. En général, on choisira des valeurs de départ différentes pour chacune des chaînes.
 <br><br>
-On peut vérifier la convergence des chaînes avec le `Rhat` (*potential scale reduction statistic* ou *Gelman-Rubin statistic*). Intuitivement, pour un paramètre donné, cette valeur compare la variance inter-chaîne à la variance intra-chaîne pour évaluer si les chaînes ont convergé au même endroit. Si c'est le cas, le `Rhat` sera très près de 1 (`Rhat` <= 1.01)
+On peut vérifier la convergence des chaînes avec entre autres le `Rhat` (*potential scale reduction statistic* ou *Gelman-Rubin statistic*). Intuitivement, pour un paramètre donné, cette valeur compare la variance inter-chaîne à la variance intra-chaîne pour évaluer si les chaînes ont convergé au même endroit. Si c'est le cas, le `Rhat` sera très près de 1 (`Rhat` <= 1.01)
 <br>
 ```{r}
 summary(m)
@@ -2475,7 +2909,7 @@ summary(m)
 
 L'utilisation de *priors* est souvent vue comme étant la partie la plus controversée des statistiques bayésiennes. Qu'en pensez-vous?
 <br><br>
-Idéalement, il faut toujours avoir une petite idée de l'influence des *priors* sur l'analyses. Pour cela il est bien de comparer les distributions postérieures aux *priors*. On peut également faire dans certains cas des analyses de sensibilité pour quantifier cette influence.
+Idéalement, il faut toujours avoir une bonne idée de l'influence des *priors* sur nos analyses. Pour cela il est bien de comparer les distributions postérieures aux *priors*. On peut également faire dans certains cas des analyses de sensibilité pour quantifier cette influence.
 <br><br>
 Plus on a de données, moins les *priors* auront d'influence sur l'estimation des paramètres.
 
@@ -2502,12 +2936,13 @@ Voir notamment [Lemoine 2019](https://doi.org/10.1111/oik.05985) et [Banner et a
 
 ### Quels *priors* utiliser?
 
-Il faut aussi sélectionner une distribution approriée pour représenter nos *priors* et les distributions utilisées doivent être appropriées pour un paramètre donnée. Le groupe qui travaille sur la plateforme [STAN](https://mc-stan.org/) a plusieurs recommandations de *priors* à utiliser dépendemment du contexte (*priors* pour des pentes, *priors* pour des variances, *priors* pour des variances dans un contexte de modèles hiérarchiques, etc.)
+Il faut aussi sélectionner une distribution approriée pour représenter nos *priors* et les distributions utilisées doivent être appropriées pour un paramètre donné. Le groupe qui travaille sur la plateforme [STAN](https://mc-stan.org/) a plusieurs recommandations de *priors* à utiliser dépendemment du contexte (*priors* pour des pentes, *priors* pour des variances, *priors* pour des variances dans un contexte de modèles hiérarchiques, etc.)
 <br>
-Voir [Prior Choice Recommendations](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations) pour des recommandations.
+
+Voir [*Prior Choice Recommendations*](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations) pour des recommandations.
 
 
-## Attention aux *priors* "non-informatifs"!
+### Attention aux *priors* "non-informatifs"!
 
 Les *priors* non-informatifs ne le sont pas toujours sous l'échelle du paramètre. Par exemple, si vous tentez d'estimer une probabilité et que vous utiliser une distribution normale comme *prior* pour l'intercept du modèle, il se peut que ce *prior* soit très informatif sous l'échelle du prédicteur linéaire qui est relié à la probabilité par une fonction logit. Supposons un glm binomial avec seulement un intercept.
 <br><br>
@@ -2518,6 +2953,7 @@ $$ logit(p) = log\left(\frac{p}{1-p}\right) = \beta_{0} $$
 $$ \beta_{0} \sim \mathcal{N}(0,10) $$
 <br>
 
+### Attention aux *priors* "non-informatifs"!
 ```{r,fig.height=4,fig.width=8,}
 n<-10000
 x<-rnorm(n,0,10)
@@ -2527,7 +2963,159 @@ hist(exp(x)/(1+exp(x)),breaks=50,main="Lorsque converties en probabilité")
 
 ```
 <br>
-Autrement dit, le *prior* est très informatif!
+Autrement dit, le *prior* est très informatif et pousse les valeurs vers des probabilités extrêmes!
+
+
+### Étudier ses priors
+
+La distribution prédictive préalable (*Prior predictive distribution*) permet de visualiser l'effet des priors sur l'échelle de la réponse. 
+```{r, message = FALSE,tidy = FALSE, warning = FALSE, results = 'hide'}
+
+m2 <- update(m, sample_prior = "only")
+
+```
+
+
+```{r, message = FALSE,tidy = FALSE, warning = FALSE}
+newdata <- data.frame(x = seq(min(d$x), max(d$x), length.out = 100))
+
+pp <- posterior_epred(m2, newdata, ndraws = 500)
+
+plot(d$x, d$y, ylim = range(c(pp, d$y)), pch = 16, col = gray(0, 0.35)) 
+lapply(1:nrow(pp), function(i){
+  lines(newdata$x, pp[i, ], col = adjustcolor("black", 0.05))
+}) |> invisible()
+
+```
+
+#### Avec un *prior* aberrant
+```{r, message = FALSE,tidy = FALSE, results = 'hide'}
+
+newdata <- data.frame(x = seq(min(d$x), max(d$x), length.out = 100))
+
+m3 <- update(m, 
+        sample_prior = "only",
+        prior = c(
+           set_prior("normal(50,20)", class = "b", coef="x"),
+           set_prior("normal(0,50)", class = "Intercept"),
+           set_prior("gamma(2,0.1)", class = "sigma")
+        ),
+      )
+```
+
+
+```{r, message = FALSE,tidy = FALSE}
+pp <- posterior_epred(m3, newdata, ndraws = 500)
+
+plot(d$x, d$y, ylim = range(c(pp, d$y)), pch = 16, col = gray(0, 0.35)) 
+lapply(1:nrow(pp), function(i){
+  lines(newdata$x, pp[i, ], col = adjustcolor("black", 0.05))
+}) |> invisible()
+
+```
+
+#### Avec un modèle binomial
+```{r, message = FALSE,tidy = FALSE, results = 'hide'}
+
+logit <- function(p) {
+  log(p / (1 - p))
+}
+
+inv.logit <- function(x) {
+   exp(x) / (1 + exp(x))  
+}
+
+n <- 200
+x <- runif(n, 0, 10)
+z <- -2 + 0.5 * x
+y <- rbinom(n, size = 1, prob = inv.logit(z))
+
+d<-data.frame(y,x)
+
+m <- brm(y ~ x,
+       data = d,
+       cores = 3,
+       chains = 3,
+       family = "bernoulli",
+       prior = c(
+         set_prior("normal(0,5)", class = "b", coef="x"),
+         set_prior("normal(0,5)", class = "Intercept")
+       )
+     )
+```
+
+
+#### Distribution postérieure des prédictions
+```{r, message = FALSE,tidy = FALSE}
+newdata <- data.frame(x = seq(min(d$x), max(d$x), length.out = 100))
+
+pp <- posterior_epred(m, newdata, ndraws = 500)
+
+plot(d$x, d$y, ylim = range(c(pp, d$y)), pch = 16, col = gray(0, 0.35)) 
+lapply(1:nrow(pp), function(i){
+  lines(newdata$x, pp[i, ], col = adjustcolor("black", 0.05))
+}) |> invisible()
+
+
+```
+
+
+#### Ce qu'indique notre *prior*
+```{r, message = FALSE, tidy = FALSE, results = 'hide'}
+
+m2 <- update(m, sample_prior = "only")
+```
+
+
+```{r, message = FALSE, tidy = FALSE}
+pp <- posterior_epred(m2, newdata, ndraws = 500)
+
+plot(d$x, d$y, ylim = range(c(pp, d$y)), pch = 16, col = gray(0, 0.35)) 
+lapply(1:nrow(pp), function(i){
+  lines(newdata$x, pp[i, ], col = adjustcolor("black", 0.05))
+}) |> invisible()
+```
+
+
+#### Prédiction pour `x = 2`
+```{r, message = FALSE,tidy = FALSE}
+pp <- posterior_epred(m2, data.frame(x = 2), ndraws = 500)
+hist(pp, breaks = 50)
+```
+
+
+### Un *prior* plus raisonnable?
+```{r, message = FALSE,tidy = FALSE, results = 'hide'}
+
+m3 <- update(m,
+       sample_prior = "only",       
+       prior = c(
+         set_prior("normal(0,1)", class = "b", coef="x"),
+         set_prior("normal(0,1)", class = "Intercept")
+       )
+     )
+```
+
+
+```{r, message = FALSE, tidy = FALSE}
+pp <- posterior_epred(m3, newdata, ndraws = 500)
+
+plot(d$x, d$y, ylim = range(c(pp, d$y)), pch = 16, col = gray(0, 0.35)) 
+lapply(1:nrow(pp), function(i){
+  lines(newdata$x, pp[i, ], col = adjustcolor("black", 0.05))
+}) |> invisible()
+```
+
+
+## Recommandations sur les priors
+
+[**Prior Choice Recommendations**](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations) Recommandation par les développeurs de STAN
+
+[**Moving beyond noninformative priors: why and how to choose weakly informative priors in Bayesian analyses**](https://doi.org/10.1111/oik.05985)
+
+[**The use of Bayesian priors in Ecology: The good, the bad and the not great**]( https://doi.org/10.1111/2041-210X.13407)
+
+[**Choosing priors in Bayesian ecological models by simulating from the prior predictive distribution**]( https://doi.org/10.1002/ecs2.3739)
 
 
 ## Outils
@@ -2539,16 +3127,15 @@ Il existe plusieurs outils pour faire des modèles bayésiens.
 <br><br>
 [**JAGS**](https://sourceforge.net/projects/mcmc-jags/files/Manuals/) Similaire à BUGS, mais un peu plus rapide
 <br><br>
-[**STAN**](https://mc-stan.org/) Relativement nouveau, rapide et bien documenté
+[**STAN**](https://mc-stan.org/) Rapide et bien documenté
 <br><br>
-[**Nimble**](https://r-nimble.org/) Très nouveau
+[**Nimble**](https://r-nimble.org/) Relativement nouveau
 <br><br>
-[**MCMCglmm**](https://CRAN.R-project.org/package=MCMCglmm) Modèles animal?
+[**MCMCglmm**](https://CRAN.R-project.org/package=MCMCglmm) Modèle animal?
 <br><br>
-[**brms**](https://CRAN.R-project.org/package=brms) Facile d'utilisation
+[**brms**](https://CRAN.R-project.org/package=brms) Facile d'utilisation et basé sur STAN
 <br><br>
 [**INLA**](https://www.r-inla.org/) Modèles spatiaux
-
 
 
 # Liens utiles
