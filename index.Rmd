@@ -2640,7 +2640,7 @@ Il s'agit simplement d'une règle en théorie des probabilités qui permet de re
 $$P(A|B) = \frac{P(B|A)P(A)}{P(B)}$$
 <br><br>
 
-$P(A)$ veut dire la probbailité de $A$, indépendemment de $B$.
+$P(A)$ veut dire la probabilité de $A$, indépendemment de $B$.
 <br><br>
 $P(A|B)$ veut dire la probabilité de $A$ sachant $B$. C'est une probabilité conditionnelle.
 
