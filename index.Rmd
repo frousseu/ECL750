@@ -90,7 +90,7 @@ h1.title {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  margin-top: 5vh;
+  margin-top: 100vh;
   padding-top: 20px;
   padding-bottom: 50px;
   color: DarkGreen;
@@ -411,7 +411,7 @@ $y$ = observations
 
 $\mu$ = prédicteur linéaire
 
-On a donc un modèle représentant le lien entre nos variables et on cherche à estimer les **paramètres** de ce modèles à l'aide de données.
+On a donc un modèle représentant le lien entre nos variables et on cherche à estimer les **paramètres** de ce modèle à l'aide de données.
 
 ### Suppositions de bases
 
@@ -593,7 +593,7 @@ qqline(resid(m))
 
 ```{r}
 
-# simulations d'un facteur
+# simulation d'un facteur
 d$fac<-factor(sample(c("A","B","C"),nrow(d),replace=TRUE))
 d$y<-d$y+2*as.integer(d$fac)-1
 
@@ -616,7 +616,7 @@ plot(d$y,predict(m))
 ```
 
 
-### Soumettre de nouvelle valeurs à `predict`
+### Soumettre de nouvelles valeurs à `predict`
 
 Plus souvent, on veut illustrer l'effet de nos variables et pour cela, il faut soumettre des valeurs à la fonction `predict`. Cette fonction est très utile lorsque l'on veut un maximum de contrôle sur les valeurs à prédire.
 
@@ -663,7 +663,7 @@ Dans vos mots, qu'est-ce qu'une interaction?
 
 <br>
 
-C'est lorsque l'effet d'une variable dépend des valeurs d'une autre variable (ou de plusieurs).
+<!-- C'est lorsque l'effet d'une variable dépend des valeurs d'une autre variable (ou de plusieurs). -->
 
 
 #### Un exemple
@@ -824,6 +824,8 @@ $$y \sim \mathcal{N}(\beta\mathbf{X}, \mathbf{I}\sigma^2)$$
 
 <br>
 
+$\beta$ est un vecteur de coefficients.
+
 $\mathbf{X}$ est une matrice avec les valeurs des variables explicatives.
 
 $\mathbf{I}$ est une matrice identité qui a pour effet d'assigner une variance égale $\sigma^2$ à toutes les observations.
@@ -877,7 +879,7 @@ $$ y \sim \mathcal{ExpFam}(\theta) $$
 
 <br>
 
-Les observations $y$ suivent une distribution particulière appartenant à la famille des distributions exponentielles avec des paramètres $\theta$. La distributions normale, de Poisson, Binomiale et Gamma font parties de la famille des distributions exponentielles.
+Les observations $y$ suivent une distribution particulière appartenant à la famille des distributions exponentielles avec des paramètres $\theta$. La distributions normale, de Poisson, Binomiale et Gamma font partie de la famille des distributions exponentielles.
 
 
 ### Fonction de lien
@@ -920,7 +922,7 @@ Cette distribution a la propriété que $\lambda = E(y) = Var(y)$. Autrement dit
 
 #### D'où provient-elle?
 
-Simulons une distribution de Poisson en distribuant aléatoirement des observations dans un carré 10 x 10. Ensuite, divisons ce carré en 100 cellules.
+Simulons une distribution de Poisson en distribuant aléatoirement 200 observations dans un carré 10 x 10. Ensuite, divisons ce carré en 100 cellules.
 
 ```{r, message=FALSE}
 
@@ -1097,7 +1099,7 @@ Si le modèle est appropré pour les données, on devrait voir ici une distribut
 
 ##### Autres vérifications
 
-Les problèmes de sous- ou sur- dispersion et de surabondance de 0 (*zéro-inflation*) sont très fréquents avec les GLM. Ces deux fonctions de DHARMa permettent d'évaluer si les observations réelles diffèrent des observations simulées en terme de présence de 0 ou de disperison. En rouge, ce sont les observations réelles et en gris les observations simulées. Si les observations réelles sont bien en dehors des observations simulées, C'est qu'il y a un problème avec le modèle et il faut un ajustment.
+Les problèmes de sous- ou sur- dispersion et de surabondance de 0 (*zéro-inflation*) sont très fréquents avec les GLM. Ces deux fonctions de DHARMa permettent d'évaluer si les observations réelles diffèrent des observations simulées en terme de présence de 0 ou de dispersion. En rouge, ce sont les observations réelles et en gris les observations simulées. Si les observations réelles sont bien en dehors des observations simulées, c'est qu'il y a un problème avec le modèle et il faut un ajustment.
 
 ```{r,message=FALSE,fig.height=5,results='hide',fig.keep='all'}
 
@@ -1140,14 +1142,14 @@ Cette fonction permet de calculer la probabilité d’observer $k$ succès si $n
 
 <br>
 
-Cette distribution a la propriété que $E(y) = np$ et $Var(y) = np(1-p)$ , autrement dit, la moyenne et la variance sont entièrement détemrinées par la propbabilité de succès et par le nombre de tirages. On a donc une autre distribution assez restrictive.
+Cette distribution a la propriété que $E(y) = np$ et $Var(y) = np(1-p)$ , autrement dit, la moyenne et la variance sont entièrement déterminées par la probabilité de succès et par le nombre de tirages. On a donc une autre distribution assez restrictive.
 
 
 #### Exemple
 
 Supposons qu'on tire pile (0) ou face (1) 10 fois et qu'on calcule le nombre de face et qu'on répète cette exercice 500 fois. Quelle sera la distribution du nombre de faces obtenus?
 
-```{r, fig.height=4,fig.width=4}
+```{r, fig.height=5,fig.width=5}
 
 n<-500
 co<-sapply(1:n,function(i){
@@ -1241,7 +1243,7 @@ C'est lorsque les données sont plus variables que ce qui est attendu par le mod
 
 <br>
 
-En général, une surdisperion ignorée fera en sorte que l'incertitude sera sous-estimée (trop de confiance dans nos résultats).
+En général, une surdispersion ignorée fera en sorte que l'incertitude sera sous-estimée (trop de confiance dans nos résultats).
 
 <br>
 
@@ -2111,7 +2113,7 @@ $$ \alpha_{i} \sim \text{Normale}(\alpha,\,\sigma_{\alpha}^{2})\ $$
 
 $$ y_{ij} \sim \text{Normale}(\mu_{ij},\,\sigma_{\epsilon}^{2})\ $$
 <br><br>
-<p style='text-align: center'>Un modèle est dit hiérarchique lorsque certains de ses paramètres sont définis par une probabilité de distribution.</p>
+<p style='text-align: center'>Un modèle est dit hiérarchique lorsque certains de ses paramètres sont définis par une distribution de probabilité.</p>
 
 ```{r, eval = FALSE, include = FALSE, message = FALSE, warning = FALSE}
 library(lme4)
@@ -2119,44 +2121,44 @@ library(ggeffects)
 
 
 set.seed(1234)
-ng<-50
-nobs<-50
-n<-ng*nobs
-id<-gl(ng,nobs)
+ng<-50 # nb de groupes
+nobs<-50 # nb d'observations par groupe
+n <- ng * nobs
+id <- gl(ng, nobs)
 
 # valeurs fictives des variables explicatives selon une distribution uniforme
-x1<-runif(n,0,100)
-x2<-runif(n,0,10)
-x3<-runif(n,0,1)
+x1 <- runif(n, 0, 100)
+x2 <- runif(n, 0, 10)
+x3 <- runif(n, 0, 1)
 
 # valeurs des paramètres beta
-b0<-100
-b1<-0.2
-b2<-1
-b3<--10
+b0 <- 100
+b1 <- 0.2
+b2 <- 1
+b3 <- -10
 
-reb0<-rep(rnorm(ng,0,15),each=nobs)
-reb1<-rep(rnorm(ng,0,0.25),each=nobs)
-reb2<-rep(rnorm(ng,0,0.01),each=nobs)
-reb3<-rep(rnorm(ng,0,1),each=nobs)
+reb0 <- rep(rnorm(ng, 0, 15), each = nobs)
+reb1 <- rep(rnorm(ng, 0, 0.25), each = nobs)
+reb2 <- rep(rnorm(ng, 0, 0.01), each = nobs)
+reb3 <- rep(rnorm(ng, 0, 1), each = nobs)
 
 # prédicteur linéaire
-mu<-(b0+reb0)+(b1+reb1)*x1+(b2+reb2)*x2+(b3+reb3)*x3
+mu <- (b0 + reb0) + (b1 + reb1) * x1 + (b2 + reb2) * x2 + (b3 + reb3) * x3
 
 # observations à partir d'une distribution normale avec un écart-type de 5
-y<-rnorm(n,mu,5)
+y <- rnorm(n, mu, 5)
 
 # données
-d<-data.frame(y,x1,x2,x3)
+d <- data.frame(y, x1, x2, x3)
 
-m<-lmer(y~x1+x2+x3+(1|id),data=d)
+m <- lmer(y ~ x1 + x2 + x3 + (1 | id), data = d)
 
-g<-ggpredict(m,terms=c("x1","id [sample=20]"),type="random")
-plot(g, add.data = TRUE, show_ci = FALSE, colors = rep("black",20), show_legend = FALSE)
+g <- ggpredict(m, terms = c("x1", "id [sample=20]"), type = "random")
+plot(g, add.data = TRUE, show_ci = FALSE, colors = rep("black", 20), show_legend = FALSE)
 
-m<-lmer(y~x1+x2+x3+(x1|id),data=d)
+m <- lmer(y ~ x1 + x2 + x3 + (x1 | id), data = d)
 
-g<-ggpredict(m,terms=c("x1","id [sample=20]"),type="random")
+g <- ggpredict(m, terms = c("x1", "id [sample=20]"), type = "random")
 plot(g, add.data = TRUE, show_ci = FALSE, colors = rep("black",20), show_legend = FALSE)
 
 ```
@@ -2365,21 +2367,20 @@ m <- lmer(y ~ x + (1|year) + (1|year:id), data = d)
 - On veut estimer la variance ou généraliser à une population d'unités d'échantillonnage
 
 
-
+<!--
 ## Formulation matricielle
 
 <br><br>
-<!-- $$ \mu_{ij} = \alpha_{i} + \beta x_{ij}$$
+$$ \mu_{ij} = \alpha_{i} + \beta x_{ij}$$
 
 $$ \alpha_{i} \sim \text{Normale}(\alpha,\,\sigma_{\alpha}^{2})\ $$
 
-$$ \textbf{y} \sim \text{Normale}(\mu_{ij},\,\sigma_{\epsilon}^{2})\ $$ -->
-
+$$ \textbf{y} \sim \text{Normale}(\mu_{ij},\,\sigma_{\epsilon}^{2})\ $$
 
 $$\boldsymbol{y} \sim \text{Normale}(\mathbf{\beta}\mathbf{X}, \mathbf{I}\sigma^2)$$
 
 $$\boldsymbol{y} \sim \text{Normale}(\mathbf{\beta}\mathbf{X}, \mathbf{\Sigma})$$
-
+-->
 
 
 
@@ -2397,8 +2398,83 @@ _No pooling_
 <br><br>
 _Partial pooling_
 
+## Un exemple
 
-## Problèmes, questionnements
+```{r, message = FALSE, warning = FALSE, echo = FALSE}
+
+set.seed(1234) #12345
+ng <- 50
+nobs <- sample(2:10, size = ng, replace = TRUE)
+
+#id <- gl(ng, nobs)
+id <- factor(rep(1:ng, times = nobs), levels = 1:ng)
+n <- length(id)
+
+# valeurs fictives des variables explicatives selon une distribution uniforme
+x <- runif(n, 0, 100)
+
+# valeurs des paramètres
+a <- 100
+b <- 1
+
+# on génère l'effet aléatoire pour chaque groupe
+rea <- rep(rnorm(ng, 0, 20), times = nobs)
+
+reb <- rep(rnorm(ng, 0, 0.5), times = nobs)
+
+mu <- (a + rea) + (b + reb) * x
+
+y <- rnorm(n, mu, 5)
+
+d <- data.frame(id, y, x)
+
+m <- lmer(y ~ x + (x|id), data = d)
+m2 <- lm(y ~ x * id, data = d)
+
+co <- coef(m2)
+co[1:2] <- c(0, 0)
+names(co)[1:2] <- c("id1", "x:id1")
+co <- co[order(names(co))]
+mco <- matrix(co, ncol = 2)
+rownames(mco) <- names(co)[1:(length(co)/2)]
+mco <- mco[order(match(gsub("id", "", rownames(mco)), levels(d$id))), ]
+mco <- mco + matrix(coef(m2)[1:2], ncol = 2)[rep(1, nrow(mco)), ]
+#mco
+
+plot(mco[, 1], mco[, 2], pch = 16, xlab = "Intercept", ylab = "Pente")
+#text(mco[, 1], mco[, 2], labels = unname(table(id)), cex = 0.5, adj = c(0.5, -1))
+points(coef(m)$id[, 1], coef(m)$id[, 2], pch = 1, col = "tomato")
+abline(v = a, lty = 3); abline(h = b, lty = 3)
+
+invisible(lapply(1:nrow(mco), function(i){
+  lines(c(mco[i, 1], coef(m)$id[i, 1]), c(mco[i, 2], coef(m)$id[i, 2]), col = "red")
+}))
+
+legend("top", inset = c(0, -0.12), bty = "n", ncol = 2, legend = c("lm [ y ~ x * id ]", "lmer [ y ~ x + (x | id) ]"), pch = c(16, 1), col = c("black", "red"), xpd = TRUE)
+
+
+```
+
+## Effet du n
+
+```{r, message = FALSE, warning = FALSE, echo = FALSE}
+
+plot(mco[, 1], mco[, 2], pch = 16, xlab = "Intercept", ylab = "Pente")
+text(mco[, 1], mco[, 2], labels = unname(table(id)), cex = 1, adj = c(0.5, -1))
+points(coef(m)$id[, 1], coef(m)$id[, 2], pch = 1, col = "tomato")
+abline(v = a, lty = 3); abline(h = b, lty = 3)
+
+invisible(lapply(1:nrow(mco), function(i){
+  lines(c(mco[i, 1], coef(m)$id[i, 1]), c(mco[i, 2], coef(m)$id[i, 2]), col = "red")
+}))
+
+legend("top", inset = c(0, -0.12), bty = "n", ncol = 2, legend = c("lm [ y ~ x * id ]", "lmer [ y ~ x + (x | id) ]"), pch = c(16, 1), col = c("black", "red"), xpd = TRUE)
+
+```
+
+
+
+## Problèmes, questionnements ?
 
 <br><br>
 <p style='text-align: center'>**La GLMM FAQ!**</p>
@@ -2414,7 +2490,7 @@ Quelle est la probabilité d'obtenir 2 fois pile en tirant une pièce de monnaie
 
 ### Pile ou face
 
-On doit multiplier la probabilité de chaque événement pour obtenir la probabilité combinée de ces deux événements. Si $P(pile) = 0.5$ (*i.e.* la probabilité d'otenir pile), on a:
+On doit multiplier la probabilité de chaque événement pour obtenir la probabilité combinée de ces deux événements. Si $P(pile) = 0.5$ (*i.e.* la probabilité d'obtenir pile), on a:
 
 <br>
 $$P(pile,pile) = P(pile) \times P(pile) = 0.5 \times 0.5 = 0.25$$
@@ -2440,7 +2516,7 @@ prod(dbinom(c(0,0),size=1,p=0.5))
 
 ## Vraisemblance
 
-La vraisemblance (*likelihood*) représente la plausibilité de valeurs de paramètres en fonction de données observées. L'utlisation de la vraisemblance implique l'utilisation de distribution de probablités pour représenter le lien entre les observations et les modèles.
+La vraisemblance (*likelihood*) représente la plausibilité de valeurs de paramètres en fonction de données observées. L'utilisation de la vraisemblance implique l'utilisation de distribution de probabilités pour représenter le lien entre les observations et les modèles.
 <br><br>
 Pour quantifier la vraisemblance, on peut utiliser une fonction de vraisemblance (*likelihood function*).
 <br>
@@ -2467,7 +2543,7 @@ L'idée derrière le maximum de vraisemblance (*maximum likelihood*) est de dét
 <br><br>
 Une grande partie des paramètres que nous estimons sont estimés par la méthode du maximum de vraisemblance. 
 <br>
-Certaines méthodes plus classique comme la miminimisation de la somme des carrés dans la régression standard sont équivalente à la maximisation de la vraisemblance. La sélection de modèles par AIC repose sur l'utilisation du maximum de vraisemblance. 
+Certaines méthodes plus classiques comme la minimisation de la somme des carrés dans la régression standard sont équivalentes à la maximisation de la vraisemblance. La sélection de modèles par AIC repose sur l'utilisation du maximum de vraisemblance. 
 
 
 ### Exemple
@@ -2478,9 +2554,9 @@ Simulons `n = 20` présences/absences avec une probabilité de `p = 0.5`. Ensuit
 ```{r}
 set.seed(123)
 p<-0.5
-y<-rbinom(20,1,0.5)
+y<-rbinom(20,1,p) # tirage aléatoire de 20 valeurs de 0/1 avec une probabilité de 0.5
 
-probs<-seq(0,1,by=0.01)
+probs<-seq(0,1,by=0.01) # valeurs du paramètre qui seront évaluées
 l<-sapply(probs,function(i){
   prod(dbinom(y,size=1,prob=i)) # likelihood
 })
@@ -2492,7 +2568,7 @@ Pour calculer la vraisemblance, on utilise la fonction dbinom qui permet de calc
 
 ### Profil de vraisemblance
 
-On peut par la suite illustrer la vraisemblance d'obtenir les valeurs observées pour les différentes valeurs de `p`. Ceci permet d'illustrer le profile de vraisemblance (*likelihood profile*).
+Par la suite, on peut illustrer la vraisemblance d'obtenir les valeurs observées pour les différentes valeurs de `p`. Ceci permet d'illustrer le profile de vraisemblance (*likelihood profile*).
 
 ```{r}
 plot(probs,l,type="l",ylab="Likelihood",xlab="Valeur du paramètre p")
@@ -2520,7 +2596,7 @@ exp(coef(m))/(1+exp(coef(m)))
 
 ### Intervalle de confiance 
 
-On peut également estimer un intervalle de confiance autour de cette probabilité avec la fonction `confint.` Différentes méthodes existent pour obtenir un intervallede confiance à partir d'un profil de vraisemblance, mais nous n'arborderons pas cela ici (*i.e.* *profile likelihood confidence intervals*).
+On peut également estimer un intervalle de confiance autour de cette probabilité avec la fonction `confint.` Différentes méthodes existent pour obtenir un intervalle de confiance à partir d'un profil de vraisemblance, mais nous n'arborderons pas cela ici (*i.e.* *profile likelihood confidence intervals*).
 <br>
 ```{r}
 ci<-confint(m) # calcul de l'intervalle de confiance sur les coefficients
@@ -2571,7 +2647,7 @@ $P(A|B)$ veut dire la probabilité de $A$ sachant $B$. C'est une probabilité co
 
 ### Interprétation
 
-Un exemple classique de cette règle est le suivant. Supposons que $P(A)$ désigne la probabilité d'être infecté par la Covid-19 et que $P(B)$ désigne la probabilité de tester positif à un test de Covid-19. Ici, on a aussi $P(A')$ qui est la probabilité de ne pas être infecté.
+Un exemple classique de cette règle est le suivant. Supposons que $P(A)$ désigne la probabilité d'être infecté par la Covid-19 et que $P(B)$ désigne la probabilité de tester positif à un test de Covid-19. Ici, on a aussi $P(A')$ qui est la probabilité de ne pas être infecté et $P(B')$ qui est la probabilité d'un test négatif.
 <br><br>
 Si on a:
 <br>
@@ -2581,7 +2657,7 @@ $P(A') = 1-1/500 = 0.998$: proportion de personnes qui ne sont pas infectées
 
 $P(B|A) = 0.98$: probabilité d'un test positif si une personne est infectée
 
-$P(B|A') = 0.95$: probabilité d'un test négatif si une personne n'est pas infectée
+$P(B|A') = 0.05$: probabilité d'un test positif si une personne n'est pas infectée
 
 $P(B) = P(B|A)P(A) + P(B|A')P(A')$: il faut additionner les possibilités associées au cas où une personne est infectée et au cas où une personne n'est pas infectée. 
 
@@ -2590,10 +2666,10 @@ $P(B) = P(B|A)P(A) + P(B|A')P(A')$: il faut additionner les possibilités associ
 Quelle est la probabilité d'être infecté si on reçoit un test positif (en assumant qu'on se fait tester pour une raison autre que d'avoir des symptômes) ?
 <br>
 
-$$P(A|B) = \frac{P(B|A)P(A)}{P(B|A)P(A)+P(B|A')P(A')} = \frac{0.98 \times 0.002}{0.98 x 0.002 \times (1-0.95) \times 0.998} \approx 0.0378$$
+$$P(A|B) = \frac{P(B|A)P(A)}{P(B|A)P(A)+P(B|A')P(A')} = \frac{0.98 \times 0.002}{(0.98 \times 0.002) + (0.05 \times 0.998)} \approx 0.0378$$
 
 <br>
-Dans ce cas fictif, la probabilité d'avoir réellement la Covid-19 si le test est positif n'est que d'environ 3.8 %
+Dans ce cas fictif, la probabilité d'avoir réellement la Covid-19 si le test est positif n'est que d'environ 3.78 %
 
 
 ## Statistiques bayésiennes
@@ -2619,7 +2695,7 @@ $P(data)$: distribution marginale des données (*marginal likelihood*)
 
 $$P(\theta|data) = \frac{P(data|\theta)P(\theta)}{P(data)}$$
 <br><br>
-La distribution postérieure $P(\theta|data)$ est ce que l'on cherche à estimer. Il s'agit d'une distribution de probabilité qui décrit les probabilités des différentes valeurs possibles du paramètre. Contrairement avec les analyses fréquentistes, on peut directement parler de la probabilité qu'un paramètre soit entre telle et telle valeur.
+La distribution postérieure $P(\theta|data)$ est ce que l'on cherche à estimer. Il s'agit d'une distribution de probabilité qui décrit les probabilités des différentes valeurs possibles du paramètre. Contrairement aux analyses fréquentistes, on peut directement parler de la probabilité qu'un paramètre soit entre telle et telle valeur.
 
 ### Vraisemblance (*likelihood*)
 
@@ -2631,7 +2707,7 @@ Comme vu précédemment, la vraisemblance $P(data|\theta)$ représente la probab
 
 $$P(\theta|data) = \frac{P(data|\theta)P(\theta)}{P(data)}$$
 <br><br>
-Les distributions *a priori* $P(data)$ représentent nos croyances sur les valeurs des paramètres avant de faire les analyses. On les représente à l'aide de distributions de probabilité. Ces croyances représentent ce à quoi on s'attend en termes de valeurs en se basant sur nos connaissances théoriques avant de faire notre expérience.
+Les distributions *a priori* $P(\theta)$ représentent nos croyances ou nos connaissances sur les valeurs des paramètres avant de faire les analyses. On les représente à l'aide de distributions de probabilité. Ces croyances représentent ce à quoi on s'attend en termes de valeurs en se basant sur nos connaissances avant de faire notre expérience.
 
 
 ### Distribution marginale des données
@@ -2640,7 +2716,7 @@ $$P(\theta|data) = \frac{P(data|\theta)P(\theta)}{P(data)} = \frac{P(data|\theta
 <br><br>
 Cette quantité $P(data)$ (*marginal likelihood*) est beaucoup plus difficile à comprendre intuitivement. Elle représente en quelque sorte la probabilité des données pour l'ensemble des valeurs de paramètres possibles (d'où l'intégrale). C'est la distribution marginale des données ou la vraisemblance marginale. Elle permet également de faire en sorte que la distribution postérieure soit une distribution de probabilité (i.e. aire sous la courbe = 1). 
 <br><br>
-Il s'agit d'une constante qui est généralement très difficile à calculer. Des méthodes comme le MCMC permettent d'éviter de la calculer dans l'obtention de la distribution postérieure.  
+Il s'agit d'une constante qui est généralement très difficile à calculer. Des méthodes comme le MCMC permettent d'éviter de la calculer directement dans l'obtention de la distribution postérieure.  
 
 ### En résumé
 
@@ -2658,7 +2734,7 @@ $$Posterior \propto Likelihood \times Prior$$
 En d'autres mots, la distribution postérieure est proportionnelle à la vraisemblance et aux distributions *a priori*
 
 <br><br>
-On pourrait aussi dire qu'avec une approche bayésienne, on met à jour nos croyances à l'aide de données.
+On pourrait aussi dire qu'avec une approche bayésienne, on met à jour nos croyances ou nos connaissances à l'aide de données.
 
 
 ## Avantages
@@ -2795,10 +2871,9 @@ plot(m)
 
 Les distributions postérieures des paramètres sont illustrées à gauche. À droite, les chaînes de MCMC sont illustrées (nous y reviendrons). <!--Avec les modèles bayésiens, il faut toujours vérifier la convergence des chaînes.-->
 
-
 ## MCMC
 
-Le MCMC (*Markov Chain Monte Carlo*) est une classe d'algorithmes permettant d'échantillonner à partir d'une distribution de probabilité. Il s'agit d'une approche qui permet d'éviter des calculs complexes, voire impossible, en utilisant une approche d'échantillonnage,
+Le MCMC (*Markov Chain Monte Carlo*) est une classe d'algorithmes permettant d'échantillonner à partir d'une distribution de probabilité. Il s'agit d'une approche qui permet d'éviter des calculs complexes, voire impossible, en utilisant une approche d'échantillonnage.
 <br><br>
 Dans un contexte bayésien, le MCMC permet d'échantillonner à partir d'une distribution postérieure. Autrement dit, la distribution postérieure de chaque paramètre estimé dans un contexte bayésien peut entre autre être obtenue par cette méthode d'échantillonnage.
 <br><br>
@@ -2820,9 +2895,9 @@ plot(m)
 
 Avec les analyses bayésiennes où les paramètres sont estimés par MCMC, il faut donc vérifier la convergence des chaînes pour s'assurer que les valeurs échantillonnées représentent bien les distributions postérieures. 
 <br><br>
-On élimine souvent une certaine portion du début des chaînes pour enlever les valeurs échantillonnées, alors que les chaînes n'ont pas convergées. On parle souvent de *burnin* pous désigner cette partie des chaînes.
+On élimine souvent une certaine portion du début des chaînes pour enlever les valeurs échantillonnées, alors que les chaînes n'ont pas convergé. On parle souvent de *burnin* pour désigner cette partie des chaînes.
 <br><br>
-Il est également très fréquent d'utiliser plusieurs chaînes (3-4) pour un même paramètre ce qui permet de s'assurer que les chaînes ont toutes convergées en vérifiant qu'elles ont toutes convergées au même endroit. En général, on choisira des valeurs de départ différentes pour chacune des chaînes.
+Il est également très fréquent d'utiliser plusieurs chaînes (3-4) pour un même paramètre ce qui permet de s'assurer que les chaînes ont toutes convergé au même endroit. En général, on choisira des valeurs de départ différentes pour chacune des chaînes.
 <br><br>
 On peut vérifier la convergence des chaînes avec entre autres le `Rhat` (*potential scale reduction statistic* ou *Gelman-Rubin statistic*). Intuitivement, pour un paramètre donné, cette valeur compare la variance inter-chaîne à la variance intra-chaîne pour évaluer si les chaînes ont convergé au même endroit. Si c'est le cas, le `Rhat` sera très près de 1 (`Rhat` <= 1.01)
 <br>
@@ -2834,7 +2909,7 @@ summary(m)
 
 L'utilisation de *priors* est souvent vue comme étant la partie la plus controversée des statistiques bayésiennes. Qu'en pensez-vous?
 <br><br>
-Idéalement, il faut toujours avoir une petite idée de l'influence des *priors* sur l'analyses. Pour cela il est bien de comparer les distributions postérieures aux *priors*. On peut également faire dans certains cas des analyses de sensibilité pour quantifier cette influence.
+Idéalement, il faut toujours avoir une bonne idée de l'influence des *priors* sur nos analyses. Pour cela il est bien de comparer les distributions postérieures aux *priors*. On peut également faire dans certains cas des analyses de sensibilité pour quantifier cette influence.
 <br><br>
 Plus on a de données, moins les *priors* auront d'influence sur l'estimation des paramètres.
 
@@ -2861,10 +2936,10 @@ Voir notamment [Lemoine 2019](https://doi.org/10.1111/oik.05985) et [Banner et a
 
 ### Quels *priors* utiliser?
 
-Il faut aussi sélectionner une distribution approriée pour représenter nos *priors* et les distributions utilisées doivent être appropriées pour un paramètre donnée. Le groupe qui travaille sur la plateforme [STAN](https://mc-stan.org/) a plusieurs recommandations de *priors* à utiliser dépendemment du contexte (*priors* pour des pentes, *priors* pour des variances, *priors* pour des variances dans un contexte de modèles hiérarchiques, etc.)
+Il faut aussi sélectionner une distribution approriée pour représenter nos *priors* et les distributions utilisées doivent être appropriées pour un paramètre donné. Le groupe qui travaille sur la plateforme [STAN](https://mc-stan.org/) a plusieurs recommandations de *priors* à utiliser dépendemment du contexte (*priors* pour des pentes, *priors* pour des variances, *priors* pour des variances dans un contexte de modèles hiérarchiques, etc.)
 <br>
 
-Voir [Prior Choice Recommendations](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations) pour des recommandations.
+Voir [*Prior Choice Recommendations*](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations) pour des recommandations.
 
 
 ### Attention aux *priors* "non-informatifs"!
@@ -2888,14 +2963,12 @@ hist(exp(x)/(1+exp(x)),breaks=50,main="Lorsque converties en probabilité")
 
 ```
 <br>
-Autrement dit, le *prior* est très informatif et pousse les valeurs vers des probabilitées extrêmes!
+Autrement dit, le *prior* est très informatif et pousse les valeurs vers des probabilités extrêmes!
 
 
 ### Étudier ses priors
 
-*prior predictive distribution*
-
-Permet de visualiser l'effet des priors sur l'échelle de la réponse.
+La distribution prédictive préalable (*Prior predictive distribution*) permet de visualiser l'effet des priors sur l'échelle de la réponse. 
 ```{r, message = FALSE,tidy = FALSE, warning = FALSE, results = 'hide'}
 
 m2 <- update(m, sample_prior = "only")
@@ -3063,8 +3136,6 @@ Il existe plusieurs outils pour faire des modèles bayésiens.
 [**brms**](https://CRAN.R-project.org/package=brms) Facile d'utilisation et basé sur STAN
 <br><br>
 [**INLA**](https://www.r-inla.org/) Modèles spatiaux
-
-
 
 
 # Liens utiles
