@@ -90,7 +90,7 @@ h1.title {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  margin-top: 5vh;
+  margin-top: 100vh;
   padding-top: 20px;
   padding-bottom: 50px;
   color: DarkGreen;
@@ -263,7 +263,7 @@ sd(ech)/sqrt(30) # erreur-type
 L'écart-type de ces moyennes correspond à l'erreur-type estimée à partir d'un seul échantillon. En d'autres mots, l'erreur-type représente:
 
 
-* l'écart-type si des moyennes obtenues si on refaisait plusieurs fois le même échantillonnage
+* l'écart-type des moyennes obtenues si on refaisait plusieurs fois le même échantillonnage
 
 * une mesure de précision dans l'estimation de  la moyenne
 
@@ -651,7 +651,7 @@ Le package [ggeffects](https://strengejacke.github.io/ggeffects/index.html) perm
 library(ggeffects)
 library(patchwork)
 g<-ggpredict(m)
-p<-plot(g,add.data=TRUE)
+p<-plot(g,show_data=TRUE)
 wrap_plots(p)
 
 ```
@@ -697,12 +697,12 @@ Une valeur de p significative c'est bien beau, mais ce qui importe vraiment c'es
 ```{r,message=FALSE}
 
 g<-ggpredict(m,terms=c("x1","fac"),message=FALSE)
-plot(g,add.data=TRUE,jitter=FALSE)
+plot(g,show_data=TRUE,jitter=FALSE)
 
 ```
 
 
-#### Interprétion
+#### Interprétation
 
 * Beaucoup plus facile avec un graphique qu'en regardant une table de coefficients.
 
@@ -1026,7 +1026,7 @@ $$ log(5) =  1.609438 $$
 ```{r,message=FALSE}
 
 g<-ggpredict(m,terms=c("x [n=50]"))
-plot(g,add.data=TRUE,jitter=FALSE)
+plot(g,show_data=TRUE,jitter=FALSE)
 
 ```
 
@@ -1213,7 +1213,7 @@ Avec `ggeffects`
 ```{r,message=FALSE}
 
 g<-ggpredict(m,terms=c("x [n=50]"))
-plot(g,add.data=TRUE)
+plot(g,show_data=TRUE)
 
 ```
 
@@ -1274,7 +1274,7 @@ d<-data.frame(y,x)
 
 m<-glm(y~x,family="poisson",data=d)
 g<-ggpredict(m,terms="x")
-plot(g,add.data=TRUE)
+plot(g,show_data=TRUE)
 
 ```
 
@@ -2078,6 +2078,8 @@ All families available in GLMs are also available in GAMs and others are also av
 
 -->
 
+<!--
+
 # 2. Modèles mixtes/hiérarchiques
 
 <br><br>
@@ -2154,12 +2156,12 @@ d <- data.frame(y, x1, x2, x3)
 m <- lmer(y ~ x1 + x2 + x3 + (1 | id), data = d)
 
 g <- ggpredict(m, terms = c("x1", "id [sample=20]"), type = "random")
-plot(g, add.data = TRUE, show_ci = FALSE, colors = rep("black", 20), show_legend = FALSE)
+plot(g, show_data = TRUE, show_ci = FALSE, colors = rep("black", 20), show_legend = FALSE)
 
 m <- lmer(y ~ x1 + x2 + x3 + (x1 | id), data = d)
 
 g <- ggpredict(m, terms = c("x1", "id [sample=20]"), type = "random")
-plot(g, add.data = TRUE, show_ci = FALSE, colors = rep("black",20), show_legend = FALSE)
+plot(g, show_data = TRUE, show_ci = FALSE, colors = rep("black",20), show_legend = FALSE)
 
 ```
 
@@ -2204,7 +2206,7 @@ library(ggeffects)
 m <- lmer(y ~ x + (1|id), data = d)
 
 g <- ggpredict(m, terms = c("x", "id [sample=20]"), type = "random")
-plot(g, add.data = TRUE, show_ci = FALSE, colors = rep("black", 20), show_legend = FALSE)
+plot(g, show_data = TRUE, show_ci = FALSE, colors = rep("black", 20), show_legend = FALSE)
 
 ```
 
@@ -2214,7 +2216,7 @@ plot(g, add.data = TRUE, show_ci = FALSE, colors = rep("black", 20), show_legend
 ```{r, message = FALSE, warning = FALSE}
 
 g <- ggpredict(m, terms = c("x", "id [sample=20]"), type = "random")
-plot(g, add.data = TRUE, show_ci = FALSE, colors = sample(colors(), 20))
+plot(g, show_data = TRUE, show_ci = FALSE, colors = sample(colors(), 20))
 
 ```
 
@@ -2266,7 +2268,7 @@ d <- data.frame(y, x)
 m <- lmer(y ~ x + (x|id), data = d)
 
 g <- ggpredict(m, terms = c("x", "id [sample=20]"), type = "random")
-plot(g, add.data = TRUE, show_ci = FALSE, colors = rep("black",20), show_legend = FALSE)
+plot(g, show_data = TRUE, show_ci = FALSE, colors = rep("black",20), show_legend = FALSE)
 
 ```
 
@@ -2382,7 +2384,7 @@ $$\boldsymbol{y} \sim \text{Normale}(\mathbf{\beta}\mathbf{X}, \mathbf{I}\sigma^
 $$\boldsymbol{y} \sim \text{Normale}(\mathbf{\beta}\mathbf{X}, \mathbf{\Sigma})$$
 -->
 
-
+<!--
 
 ## Effet spatial, temporel, phylogénétique
 
@@ -2820,7 +2822,7 @@ m <- brm(y ~ x,
 
 library(ggeffects)
 g <- ggpredict(m, terms = c("x"))
-plot(g, add.data = TRUE)
+plot(g, show_data = TRUE)
 
 ```
 
@@ -2870,6 +2872,8 @@ plot(m)
 ```
 
 Les distributions postérieures des paramètres sont illustrées à gauche. À droite, les chaînes de MCMC sont illustrées (nous y reviendrons). <!--Avec les modèles bayésiens, il faut toujours vérifier la convergence des chaînes.-->
+
+<!--
 
 ## MCMC
 
@@ -3137,6 +3141,7 @@ Il existe plusieurs outils pour faire des modèles bayésiens.
 <br><br>
 [**INLA**](https://www.r-inla.org/) Modèles spatiaux
 
+-->
 
 # Liens utiles
 
