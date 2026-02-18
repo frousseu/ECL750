@@ -1301,7 +1301,7 @@ testZeroInflation(s)
 
 library(glmmTMB)
 
-m<-glmmTMB(y~x,family="nbinom1",data=d)
+m<-glmmTMB(y~x,family="nbinom2",data=d)
 
 s<-simulateResiduals(m)
 
@@ -2078,8 +2078,6 @@ All families available in GLMs are also available in GAMs and others are also av
 
 -->
 
-<!--
-
 # 2. Modèles mixtes/hiérarchiques
 
 <br><br>
@@ -2369,36 +2367,118 @@ m <- lmer(y ~ x + (1|year) + (1|year:id), data = d)
 - On veut estimer la variance ou généraliser à une population d'unités d'échantillonnage
 
 
-<!--
 ## Formulation matricielle
 
 <br><br>
-$$ \mu_{ij} = \alpha_{i} + \beta x_{ij}$$
+$$\mu_{ij} = \alpha_{i} + \beta x_{ij}$$
 
-$$ \alpha_{i} \sim \text{Normale}(\alpha,\,\sigma_{\alpha}^{2})\ $$
+$$\alpha_{i} \sim \text{Normale}(\alpha,\,\sigma_{\alpha}^{2})$$
 
-$$ \textbf{y} \sim \text{Normale}(\mu_{ij},\,\sigma_{\epsilon}^{2})\ $$
+$$y_{ij} \sim \text{Normale}(\mu_{ij},\,\sigma_{\epsilon}^{2})$$
 
-$$\boldsymbol{y} \sim \text{Normale}(\mathbf{\beta}\mathbf{X}, \mathbf{I}\sigma^2)$$
+<br><br>
+De façon plus générale:
+<br>
 
-$$\boldsymbol{y} \sim \text{Normale}(\mathbf{\beta}\mathbf{X}, \mathbf{\Sigma})$$
--->
+$$\boldsymbol{y} \sim \text{Normale}(\mathbf{\boldsymbol{\beta}}\mathbf{X}, \mathbf{I}\sigma^2)$$
+
+$$\boldsymbol{y} \sim \text{Normale}(\mathbf{\boldsymbol{\beta}}\mathbf{X}, \mathbf{\Sigma})$$
+
+
+## Structure de covariance
+
+Si on a 20 groupes avec 10 observations par groupe, la matrice de covariance $\mathbf{\Sigma}$ est diagonale par blocs avec 20 groupes identiques de taille $10 \times 10$ :
+
+$$
+\mathbf{\Sigma}
+=
+\begin{pmatrix}
+\mathbf{\Sigma}_1 & 0 & \cdots & 0 \\
+0 & \mathbf{\Sigma}_2 & \cdots & 0 \\
+\vdots & \vdots & \ddots & \vdots \\
+0 & 0 & \cdots & \mathbf{\Sigma}_{20}
+\end{pmatrix}
+$$
+
+Chaque groupe a une variance totale de :
+
+$$
+\mathbf{\Sigma}_i
+=
+\sigma_\alpha^2 \mathbf{J}_{10}
++
+\sigma_\epsilon^2 \mathbf{I}_{10}
+$$
+
+où
+
+- $\mathbf{J}_{10}$ est une matrice $10 \times 10$ de 1  
+- $\mathbf{I}_{10}$ est la matrice identité $10 \times 10$  
+
+<br>
+Pour chaque groupe on a donc:
+
+$$
+\mathbf{\Sigma}_i =
+\begin{pmatrix}
+\sigma_\alpha^2 + \sigma_\epsilon^2 & \sigma_\alpha^2 & \cdots & \sigma_\alpha^2 \\
+\sigma_\alpha^2 & \sigma_\alpha^2 + \sigma_\epsilon^2 & \cdots & \sigma_\alpha^2 \\
+\vdots & \vdots & \ddots & \vdots \\
+\sigma_\alpha^2 & \sigma_\alpha^2 & \cdots & \sigma_\alpha^2 + \sigma_\epsilon^2
+\end{pmatrix}
+$$
+
+
+## Variance et covariance
+
+Donc, au sein d'un même groupe :
+
+$$
+\mathrm{Var}(y_{ij}) = \sigma_\alpha^2 + \sigma_\epsilon^2
+$$
+
+$$
+\mathrm{Cov}(y_{ij}, y_{ik}) = \sigma_\alpha^2
+\quad (j \neq k)
+$$
+
+<br>
+Entre les groupes :
+
+$$
+\mathrm{Cov}(y_{ij}, y_{lk}) = 0
+\quad (i \neq l)
+$$
 
 <!--
 
-## Effet spatial, temporel, phylogénétique
+## Corrélation intra-classe (ICC)
 
-<br>
-Autocorrélation spatiale, temporelle, phylogénétique, etc...
+$$
+\rho = \frac{\sigma_\alpha^2}{\sigma_\alpha^2 + \sigma_\epsilon^2}
+$$
+
+Il s’agit de la structure de covariance à symétrie composée induite par un modèle à intercept aléatoire pour mesures répétées.
+
+-->
 
 ## Régularisation (_shrinkage_)
 
 <br>
 _Complete pooling_
-<br><br>
+
+Un seul modèle pour tous, on ignore les différences entre les groupes
+<br><br><br>
+
 _No pooling_
-<br><br>
+
+Un seul modèle par groupe, on estime un paramètre pour chaque groupe et ces paramètres sont indépendants
+<br><br><br>
+
 _Partial pooling_
+
+Un seul modèle par groupe, mais les paramètres pour chaque groupe sont influencés par un modèle et les estimations sont tirées vers une valeur commune
+
 
 ## Un exemple
 
@@ -2457,6 +2537,7 @@ legend("top", inset = c(0, -0.12), bty = "n", ncol = 2, legend = c("lm [ y ~ x *
 
 ```
 
+
 ## Effet du n
 
 ```{r, message = FALSE, warning = FALSE, echo = FALSE}
@@ -2475,6 +2556,82 @@ legend("top", inset = c(0, -0.12), bty = "n", ncol = 2, legend = c("lm [ y ~ x *
 ```
 
 
+## Effet spatial, temporel, phylogénétique
+
+<br>
+Autocorrélation spatiale, temporelle, phylogénétique, etc...
+
+
+## Structure d’erreur spatiale
+
+Si on a:
+
+$$\boldsymbol{y} \sim \text{Normale}(\mathbf{\boldsymbol{\beta}}\mathbf{X}, \mathbf{\Sigma})$$
+<br>
+on peut définir la matrice de covariance par une fonction de corrélation spatiale:
+<br>
+
+$$\Sigma_{ij} = \text{Cov}(y_i, y_j) = \sigma^2 \, \rho(d_{ij})$$
+
+où
+
+
+- $d_{ij}$ est la distance entre les localisations $y_i$ et $y_j$  
+- $\sigma^2$ est la variance marginale  
+- $\rho()$ est la fonction de corrélation spatiale  
+
+
+## Corrélation spatiale exponentielle
+
+$$\rho(d) = \exp\left(-\frac{d}{\phi}\right)$$
+<br>
+où $\phi > 0$ est l'étendue de la corrélation spatiale (_range_) et la covariance devient:
+<br>
+$$\Sigma_{ij} = \sigma^2 \exp\left(-\frac{d_{ij}}{\phi}\right)$$
+
+## Corrélation spatiale exponentielle
+
+
+```{r, message = FALSE, warning = FALSE}
+
+phi <- 2
+d <- seq(0, 10, length.out = 200)
+rho <- exp(-d / phi)
+plot(d, rho, type = "l", lwd = 2, xlab = "Distance", ylab = expression("Corrélation spatiale" ~ rho(d)))
+
+```
+L'indépendence entre les observations croit avec la distance
+
+## Formulation matricielle
+
+Le modèle peut être écrit sous forme matricielle :
+
+$$\boldsymbol{y} \sim \text{Normale}(\boldsymbol{\beta}\mathbf{X}, \mathbf{\Sigma})$$
+<br>
+avec
+<br>
+$$
+\mathbf{\Sigma} =
+\sigma^2
+\begin{pmatrix}
+1 & e^{-d_{12}/\phi} & e^{-d_{13}/\phi} & \cdots \\
+e^{-d_{21}/\phi} & 1 & e^{-d_{23}/\phi} & \cdots \\
+e^{-d_{31}/\phi} & e^{-d_{32}/\phi} & 1 & \cdots \\
+\vdots & \vdots & \vdots & \ddots
+\end{pmatrix}
+$$
+
+<br><br>
+On estimera ici $\sigma^2$ et le paramètre $\phi$ qui détermineront la variation entre les observations. 
+
+
+## Interprétation
+
+- Les observations proches dans l’espace sont fortement corrélées.  
+- La corrélation décroît progressivement lorsque la distance augmente.  
+- Lorsque $d_{ij} \to \infty$, la covariance tend vers 0.  
+- Lorsque $\phi$ est grand, la dépendance spatiale s’étend sur de longues distances.
+
 
 ## Problèmes, questionnements ?
 
@@ -2483,6 +2640,7 @@ legend("top", inset = c(0, -0.12), bty = "n", ncol = 2, legend = c("lm [ y ~ x *
 <br>
 <p style='text-align: center'>[https://bb.olker.github.io/mixedmodels-misc/glmmFAQ.html](https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html)</p>
 
+<!--
 
 # 3. Vraisemblance et statistiques bayésiennes
 
