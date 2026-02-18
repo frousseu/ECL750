@@ -1314,7 +1314,7 @@ testZeroInflation(s)
 ```
 
 
-### Sousdisperion
+### Sousdispersion
 
 C'est lorsque les données sont moins variables que ce qui est attendu par le modèle. Ceci est beaucoup plus rare et probablement moins dommageable (e.g. taille de couvée/portée chez les oiseaux/mammifères voir [Brooks et al. 2019](https://doi.org/10.1002/ecy.2706)). 
 
