@@ -2640,7 +2640,6 @@ On estimera ici $\sigma^2$ et le paramètre $\phi$ qui détermineront la variati
 <br>
 <p style='text-align: center'>[https://bb.olker.github.io/mixedmodels-misc/glmmFAQ.html](https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html)</p>
 
-<!--
 
 # 3. Vraisemblance et statistiques bayésiennes
 
@@ -3031,7 +3030,6 @@ plot(m)
 
 Les distributions postérieures des paramètres sont illustrées à gauche. À droite, les chaînes de MCMC sont illustrées (nous y reviendrons). <!--Avec les modèles bayésiens, il faut toujours vérifier la convergence des chaînes.-->
 
-<!--
 
 ## MCMC
 
@@ -3298,8 +3296,6 @@ Il existe plusieurs outils pour faire des modèles bayésiens.
 [**brms**](https://CRAN.R-project.org/package=brms) Facile d'utilisation et basé sur STAN
 <br><br>
 [**INLA**](https://www.r-inla.org/) Modèles spatiaux
-
--->
 
 # Liens utiles
 
